@@ -109,37 +109,89 @@ def home():
 @app.route("/compounding")
 def compounding():
     content = """
-    <div class="card" style="max-width:550px;margin:0 auto;">
-      <h2>चक्रवृद्धि ब्याज (Compounding Calculator)</h2>
-      <p style="color:#94a3b8;font-size:13px;margin-bottom:14px;">सीधे बैकएंड AST इंजन द्वारा संचालित।</p>
-      <label>मूलधन राशि (Principal ₹)</label><input type="number" id="p" value="100000">
-      <label>वार्षिक दर (% Rate)</label><input type="number" id="r" value="12">
-      <label>समय (वर्ष / Years)</label><input type="number" id="y" value="5">
-      <button class="btn btn-green" onclick="calc()">कैलकुलेट करें</button>
-      <div id="c_res" class="out">यहाँ परिणाम दिखेगा...</div>
+    <div class="card" style="max-width:600px;margin:0 auto;">
+      <h2>📈 Monthly Step-up SIP Calculator</h2>
+      <p style="color:#94a3b8;font-size:13px;margin-bottom:14px;">Har mahine ki SIP aur har saal 10% badhotri (Step-up) ka live hisab.</p>
+      
+      <label>Shuruaati Monthly SIP (₹ per month)</label>
+      <input type="number" id="monthly_sip" value="5000">
+
+      <label>Har Saal SIP Kitni Badhegi? (% Yearly Step-up)</label>
+      <input type="number" id="step_up" value="10">
+
+      <label>Expected Annual Return (% per year)</label>
+      <input type="number" id="rate" value="12">
+
+      <label>Kitne Saal Ke Liye? (Years)</label>
+      <input type="number" id="years" value="10">
+
+      <button class="btn btn-green" onclick="calcSip()">Step-up SIP Calculate Karein</button>
+      
+      <div id="c_res" class="out" style="line-height:1.7;">Yahan detail breakdown dikhega...</div>
     </div>
+
     <script>
-    async function calc(){
-      const p = Number(document.getElementById('p').value);
-      const r = Number(document.getElementById('r').value);
-      const y = Number(document.getElementById('y').value);
+    async function calcSip(){
+      const sip = Number(document.getElementById('monthly_sip').value);
+      const step = Number(document.getElementById('step_up').value);
+      const r = Number(document.getElementById('rate').value);
+      const y = Number(document.getElementById('years').value);
       const out = document.getElementById('c_res');
-      out.innerText = "कैलकुलेशन चालू है...";
-      const code = `def compound(p, r, y):\\n    return round(p * ((1 + (r / 100)) ** y), 2)`;
-      const res = await fetch('/execute', {
-        method:'POST',
-        headers:{'Content-Type':'application/json','X-API-Key':'dex_master_live_key_999'},
-        body: JSON.stringify({code:code, func_name:'compound', args:[p,r,y]})
-      });
-      const d = await res.json();
-      if(d.verdict === 'SUCCESS'){
-        out.innerText = "कुल राशि: ₹" + d.result.toLocaleString('en-IN') + " (" + d.latency_ms + "ms)";
-      } else { out.innerText = "त्रुटि: " + d.reason; }
+      
+      out.innerText = "AST Sandbox Engine calculate kar raha hai...";
+
+      // Python code jo month-by-month compounding aur yearly step-up calculate karega
+      const code = `def step_up_sip(monthly_inv, step_up_pct, annual_rate, total_years):
+    monthly_rate = (annual_rate / 100) / 12
+    total_months = total_years * 12
+    current_sip = monthly_inv
+    future_val = 0.0
+    total_invested = 0.0
+
+    for month in range(1, total_months + 1):
+        future_val = (future_val + current_sip) * (1 + monthly_rate)
+        total_invested += current_sip
+        # Har 12 mahine baad SIP amount step-up percentage se badhega
+        if month % 12 == 0:
+            current_sip = current_sip * (1 + (step_up_pct / 100))
+
+    wealth_gain = future_val - total_invested
+    return {
+        "invested": round(total_invested),
+        "gain": round(wealth_gain),
+        "total": round(future_val)
+    }`;
+
+      try {
+        const res = await fetch('/execute', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json', 'X-API-Key': 'dex_master_live_key_999'},
+          body: JSON.stringify({
+            code: code,
+            func_name: 'step_up_sip',
+            args: [sip, step, r, y]
+          })
+        });
+        const d = await res.json();
+        if(d.verdict === 'SUCCESS'){
+          const resData = d.result;
+          out.innerHTML = `
+            💰 <b>Aapka Kul Nivesh (Total Invested):</b> ₹${resData.invested.toLocaleString('en-IN')}<br>
+            📈 <b>Munafe Ki Kamai (Wealth Gain):</b> ₹${resData.gain.toLocaleString('en-IN')}<br>
+            🎯 <b>Final Total Value:</b> <span style="color:#38bdf8;font-size:16px;font-weight:700;">₹${resData.total.toLocaleString('en-IN')}</span><br>
+            ⚡ <i>Latency: ${d.latency_ms} ms</i>
+          `;
+        } else {
+          out.innerText = "Error: " + d.reason;
+        }
+      } catch(e) {
+        out.innerText = "Error: Server se calculation nahi ho payi.";
+      }
     }
     </script>
     """
     return render_template_string(T_HEAD + content + T_FOOT)
-
+    
 @app.route("/ai")
 def ai():
     content = """
