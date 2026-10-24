@@ -1,4 +1,4 @@
-import os, ast, json, uuid, time, math, re, urllib.request, xml.etree.ElementTree as ET, psycopg2
+import os, ast, json, uuid, time, math, re, psycopg2
 from psycopg2.extras import RealDictCursor
 from flask import Flask, request, jsonify, render_template_string, session, redirect
 
@@ -97,9 +97,6 @@ input,textarea,select{width:100%;background:#090d16;border:1px solid rgba(255,25
 
 T_FOOT = """</div><footer style="text-align:center;padding:20px;font-size:12px;color:#64748b;border-top:1px solid rgba(255,255,255,0.08);">DEX AIR Sovereign Enterprise © 2026 | PostgreSQL Live Active</footer></body></html>"""
 
-# ==========================================
-# 1. HOMEPAGE
-# ==========================================
 @app.route("/")
 def home():
     content = """
@@ -132,9 +129,6 @@ def home():
     """
     return render_template_string(T_HEAD + content + T_FOOT)
 
-# ==========================================
-# 2. LIVE GLOBAL & BUSINESS NEWS PAGE
-# ==========================================
 @app.route("/news")
 def news():
     content = """
@@ -150,7 +144,6 @@ def news():
         </div>
       </div>
 
-      <!-- News Category Filter Tabs -->
       <div style="display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;">
         <button id="ntab_all" class="btn" style="flex:1;background:#38bdf8;color:#030712;font-size:12px;padding:8px 6px;min-width:110px;" onclick="filterNews('all')">🔥 Breaking / All</button>
         <button id="ntab_biz" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 6px;min-width:110px;" onclick="filterNews('biz')">💼 Market & Business</button>
@@ -158,10 +151,7 @@ def news():
         <button id="ntab_pol" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 6px;min-width:110px;" onclick="filterNews('pol')">🏛️ Indian Politics</button>
       </div>
 
-      <!-- Live Feed Stream Container -->
-      <div id="news_container">
-        Loading live headlines...
-      </div>
+      <div id="news_container">Loading live headlines...</div>
     </div>
 
     <script>
@@ -170,20 +160,20 @@ def news():
 
     const newsData = {
       hi: [
-        { cat: 'biz', tag: 'शेयर बाजार', tagColor: '#10b981', title: 'निफ्टी 50 और सेंसेक्स में कंसोलिडेशन: IT और बैंकिंग शेयरों में मिलाजुला रुख', desc: 'वैश्विक संकेतों और कच्चे तेल की कीमतों के चलते घरेलू बाजार में सीमित दायरे में कारोबार देखा जा रहा है। विदेशी संस्थागत निवेशकों (FIIs) की बिकवाली थमी।', time: '5 मिनट पहले', source: 'NSE/BSE Insights' },
+        { cat: 'biz', tag: 'शेयर बाजार', tagColor: '#10b981', title: 'निफ्टी 50 और सेंसेक्स में कंसोलिडेशन: IT और बैंकिंग शेयरों में मिलाजुला रुख', desc: 'वैश्विक संकेतों और कच्चे तेल की कीमतों के चलते घरेलू बाजार में सीमित दायरे में कारोबार देखा जा रहा है। विदेशी संस्थागत निवेशकों की बिकवाली थमी।', time: '5 मिनट पहले', source: 'NSE/BSE Insights' },
         { cat: 'biz', tag: 'कंपनियां', tagColor: '#0284c7', title: 'रिलायंस और टाटा मोटर्स की नई EV विस्तार योजना, तिमाही नतीजों पर नजर', desc: 'ऑटोमोबाइल और एनर्जी सेक्टर में घरेलू उत्पादन बढ़ाने और भारी निवेश के ऐलान से निवेशकों में सकारात्मक रुख देखा जा रहा है।', time: '18 मिनट पहले', source: 'Financial Express' },
-        { cat: 'world', tag: 'ग्लोबल', tagColor: '#ef4444', title: 'अमेरिकी फेडरल रिजर्व की ब्याज दरों पर सख्त टिप्पणी, वैश्विक बॉन्ड यील्ड में हलचल', desc: 'मुद्रास्फीति (Inflation) के आंकड़ों को देखते हुए फेड ने ब्याज दरों में कटौती में सावधानी बरतने के संकेत दिए, जिससे डॉलर इंडेक्स मजबूत हुआ।', time: '35 मिनट पहले', source: 'Global Desk' },
-        { cat: 'world', tag: 'भू-राजनीति', tagColor: '#f59e0b', title: 'मध्य-पूर्व तनाव के चलते कच्चे तेल (Brent Crude) में उतार-चढ़ाव, सुरक्षित परिसंपत्तियों की मांग', desc: 'सप्लाई चेन में रुकावट की आशंका से क्रूड ऑयल के दामों में उछाल आया है, जिसका सीधा असर एशियाई शेयर बाजारों और भारतीय रुपये पर पड़ा है।', time: '1 घंटा पहले', source: 'World News' },
-        { cat: 'pol', tag: 'राष्ट्रीय', tagColor: '#6366f1', title: 'संसद में नए आर्थिक सुधार और इंफ्रास्ट्रक्चर बजट पर कैबिनेट की उच्चस्तरीय बैठक', desc: 'केंद्र सरकार ने मैन्युफैक्चरिंग हब और नए फ्रेट कॉरिडोर के लिए अतिरिक्त फंड के आवंटन को मंजूरी दी। रोजगार और मैन्युफैक्चरिंग को मिलेगा बढ़ावा।', time: '2 घंटे पहले', source: 'National Bureau' },
+        { cat: 'world', tag: 'ग्लोबल', tagColor: '#ef4444', title: 'अमेरिकी फेडरल रिजर्व की ब्याज दरों पर सख्त टिप्पणी, वैश्विक बॉन्ड यील्ड में हलचल', desc: 'मुद्रास्फीति के आंकड़ों को देखते हुए फेड ने ब्याज दरों में कटौती में सावधानी बरतने के संकेत दिए, जिससे डॉलर इंडेक्स मजबूत हुआ।', time: '35 मिनट पहले', source: 'Global Desk' },
+        { cat: 'world', tag: 'भू-राजनीति', tagColor: '#f59e0b', title: 'मध्य-पूर्व तनाव के चलते कच्चे तेल (Brent Crude) में उतार-चढ़ाव, सुरक्षित परिसंपत्तियों की मांग', desc: 'सप्लाई चेन में रुकावट की आशंका से क्रूड ऑयल के दामों में उछाल आया है, जिसका सीधा असर एशियाई शेयर बाजारों पर पड़ा है।', time: '1 घंटा पहले', source: 'World News' },
+        { cat: 'pol', tag: 'राष्ट्रीय', tagColor: '#6366f1', title: 'संसद में नए आर्थिक सुधार और इंफ्रास्ट्रक्चर बजट पर कैबिनेट की उच्चस्तरीय बैठक', desc: 'केंद्र सरकार ने मैन्युफैक्चरिंग हब और नए फ्रेट कॉरिडोर के लिए अतिरिक्त फंड के आवंटन को मंजूरी दी। रोजगार को मिलेगा बढ़ावा।', time: '2 घंटे पहले', source: 'National Bureau' },
         { cat: 'pol', tag: 'नीति', tagColor: '#8b5cf6', title: 'RBI और वित्त मंत्रालय का डिजिटल पेमेंट और UPI सुरक्षा पर नया सख्त दिशानिर्देश', desc: 'साइबर वित्तीय धोखाधड़ी रोकने के लिए बैंकों को नए रियल-टाइम मॉनिटरिंग सिस्टम लगाने का निर्देश दिया गया है।', time: '3 घंटे पहले', source: 'Policy Wire' }
       ],
       en: [
-        { cat: 'biz', tag: 'Markets', tagColor: '#10b981', title: 'Nifty 50 Consolidates Near Key Support: Mixed Performance Across IT & Banking', desc: 'Domestic equities witnessed range-bound action amid volatile crude prices and cautious global cues. FII selling slowed down in cash segment.', time: '5 mins ago', source: 'NSE/BSE Live' },
-        { cat: 'biz', tag: 'Corporate', tagColor: '#0284c7', title: 'Reliance and Tata Motors Accelerate EV Expansion Pipeline Ahead of Q2 Results', desc: 'Aggressive capital expenditure plans in clean energy and automobile ecosystem drive positive institutional investor sentiment.', time: '20 mins ago', source: 'Market Reuters' },
-        { cat: 'world', tag: 'Global Macro', tagColor: '#ef4444', title: 'US Federal Reserve Signals Cautious Rate Trajectory, Bond Yields Rebound', desc: 'Inflation sticky prints prompt central banks to hold rates steady, pushing US Dollar Index higher and putting pressure on emerging currencies.', time: '40 mins ago', source: 'Bloomberg Wire' },
-        { cat: 'world', tag: 'Geopolitics', tagColor: '#f59e0b', title: 'Brent Crude Spikes on Supply Chain Uncertainty in Middle East Transit Routes', desc: 'Safe-haven assets like Gold and Treasuries see increased buying as energy shipping risks escalate across key maritime channels.', time: '1 hour ago', source: 'Global Intel' },
-        { cat: 'pol', tag: 'India Policy', tagColor: '#6366f1', title: 'Union Cabinet Convenes High-Level Panel to Finalize Industrial Freight Corridor Outlay', desc: 'Government accelerates manufacturing incentives and logistical funding to boost domestic exports and regional employment.', time: '2 hours ago', source: 'National Press' },
-        { cat: 'pol', tag: 'Economy', tagColor: '#8b5cf6', title: 'Finance Ministry & RBI Issue Tightened Cyber Safety Standards for Instant Settlements', desc: 'Mandatory real-time algorithmic fraud detection rolled out across digital banking rails to safeguard merchant transactions.', time: '3 hours ago', source: 'Central Wire' }
+        { cat: 'biz', tag: 'Markets', tagColor: '#10b981', title: 'Nifty 50 Consolidates Near Key Support: Mixed Action in IT & Banks', desc: 'Domestic equities witnessed range-bound trade amid crude price volatility and cautious global cues.', time: '5 mins ago', source: 'NSE/BSE Live' },
+        { cat: 'biz', tag: 'Corporate', tagColor: '#0284c7', title: 'Reliance & Tata Motors Speed Up EV Production Capacity', desc: 'Aggressive capital expenditure plans in clean energy drive strong investor interest ahead of earnings.', time: '20 mins ago', source: 'Market Reuters' },
+        { cat: 'world', tag: 'Global Macro', tagColor: '#ef4444', title: 'US Fed Signals Prudence on Rates as Inflation Prints Remain Sticky', desc: 'Yields rebound globally as central bankers caution against aggressive near-term cuts.', time: '40 mins ago', source: 'Bloomberg Wire' },
+        { cat: 'world', tag: 'Geopolitics', tagColor: '#f59e0b', title: 'Brent Crude Rallies Over Middle East Transit Route Concerns', desc: 'Safe-haven assets like gold and bonds gain ground as maritime shipping costs face upward pressure.', time: '1 hour ago', source: 'Global Intel' },
+        { cat: 'pol', tag: 'India Policy', tagColor: '#6366f1', title: 'Cabinet Clears Additional Outlay for Freight & Industrial Corridors', desc: 'Strategic funding to accelerate transport logistics and manufacturing capabilities across hubs.', time: '2 hours ago', source: 'National Press' },
+        { cat: 'pol', tag: 'Economy', tagColor: '#8b5cf6', title: 'Finance Ministry Tightens Real-Time Anti-Fraud Framework for Digital Rails', desc: 'New algorithmic security checks mandated across commercial payment gateways.', time: '3 hours ago', source: 'Central Wire' }
       ]
     };
 
@@ -236,24 +226,27 @@ def news():
     return render_template_string(T_HEAD + content + T_FOOT)
 
 # ==========================================
-# 3. TRADER LOGIN & SIGNUP PAGE
+# 3. TRADER LOGIN & SIGNUP (SYNTAX ERROR FIXED)
 # ==========================================
 @app.route("/login")
 def login_page():
     user = session.get("username")
-    content = f"""
+    user_banner = ""
+    if user:
+        user_banner = "<div style='background:rgba(16,185,129,0.15);border:1px solid #10b981;border-radius:8px;padding:12px;margin-bottom:16px;color:#34d399;text-align:center;'>Aap logged in hain as: <b>" + user + "</b> | <a href='/logout' style='color:#ef4444;margin-left:8px;text-decoration:none;font-weight:700;'>Logout</a></div>"
+
+    content = """
     <div class="card" style="max-width:480px;margin:30px auto;">
       <h2 style="text-align:center;margin-bottom:6px;">👤 Trader Portal Access</h2>
       <p style="text-align:center;color:#94a3b8;font-size:13px;margin-bottom:20px;">Apne account se login karein ya naya register karein.</p>
       
-      {'<div style="background:rgba(16,185,129,0.15);border:1px solid #10b981;border-radius:8px;padding:12px;margin-bottom:16px;color:#34d399;text-align:center;">Aap logged in hain as: <b>' + user + '</b> | <a href="/logout" style="color:#ef4444;margin-left:8px;text-decoration:none;font-weight:700;">Logout</a></div>' if user else ''}
+      """ + user_banner + """
 
       <div style="display:flex;gap:6px;margin-bottom:18px;">
         <button id="auth_t1" class="btn" style="flex:1;background:#0284c7;" onclick="setAuthTab('login')">Sign In</button>
         <button id="auth_t2" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;" onclick="setAuthTab('reg')">Sign Up (New)</button>
       </div>
 
-      <!-- Login Form -->
       <div id="f_login">
         <label>Username / Email</label>
         <input type="text" id="l_user" placeholder="e.g. trader_dinesh">
@@ -262,7 +255,6 @@ def login_page():
         <button class="btn btn-green" onclick="handleAuth('login')">Login to Terminal</button>
       </div>
 
-      <!-- Register Form -->
       <div id="f_reg" style="display:none;">
         <label>Naya Username Chunein</label>
         <input type="text" id="r_user" placeholder="e.g. trader_dinesh">
@@ -311,10 +303,10 @@ def login_page():
         });
         const d = await res.json();
         if(d.status === 'SUCCESS'){
-          out.innerHTML = `<span style="color:#34d399;">✅ ${d.message}</span>`;
+          out.innerHTML = '<span style="color:#34d399;">✅ ' + d.message + '</span>';
           setTimeout(() => { window.location.href = '/live-market'; }, 1000);
         }else{
-          out.innerHTML = `<span style="color:#ef4444;">❌ ${d.reason}</span>`;
+          out.innerHTML = '<span style="color:#ef4444;">❌ ' + d.reason + '</span>';
         }
       }catch(e){
         out.innerText = "Server error.";
@@ -335,7 +327,7 @@ def auth_action():
     c = conn.cursor(cursor_factory=RealDictCursor)
 
     if action == "reg":
-        c.execute("SELECT * FROM users WHERE username = %s", (u,))
+                c.execute("SELECT * FROM users WHERE username = %s", (u,))
         if c.fetchone():
             c.close(); conn.close()
             return jsonify({"status": "FAILED", "reason": "Username pehle se maujood hai! Dusra chunein."})
@@ -545,8 +537,404 @@ def math_master():
           <button class="c-btn c-op" onclick="pressKey('-')">−</button>
           <button class="c-btn" onclick="pressKey('0')">0</button>
           <button class="c-btn" onclick="pressKey('.')">.</button>
-          <button class="c-btn c-op" onclick="pressKey('**')">xʸ</button>
-          <button class="c-btn c-op" onclick="pressKey('+')">+</button>
+          <button class="c-btn" onclick="pressKey('**')">xʸ</button>
+          <button class="c-btn" onclick="pressKey('+')">+</button>
+          <button class="c-btn c-equals" onclick="solveBodmas()">= Evaluate</button>
+          <button class="c-btn c-op" style="grid-column:span 2;" onclick="pressKey('%')">% Modulo</button>
+        </div>
+      </div>
+
+      <div id="math_output" class="out">यहाँ आपका विस्तृत हल और उत्तर दिखेगा...</div>
+    </div>
+
+    <script>
+    function pressKey(v){
+      var s = document.getElementById('calc_screen');
+      if(v==='C'){s.value='';}else if(v==='DEL'){s.value=s.value.slice(0,-1);}else{s.value+=v;}
+    }
+
+    function setMathTab(mode){
+      var tabs = ['m_tab1','m_tab2','m_tab3','m_tab4'];
+      for(var i=0; i<tabs.length; i++){ document.getElementById(tabs[i]).style.background='rgba(255,255,255,0.08)'; }
+      var secs = ['sec_ai_solve','sec_sheets','sec_algebra','sec_bodmas'];
+      for(var j=0; j<secs.length; j++){ document.getElementById(secs[j]).style.display='none'; }
+      
+      if(mode==='ai_solve'){document.getElementById('m_tab1').style.background='#6366f1';document.getElementById('sec_ai_solve').style.display='block';}
+      else if(mode==='sheets'){document.getElementById('m_tab2').style.background='#6366f1';document.getElementById('sec_sheets').style.display='block';}
+      else if(mode==='algebra'){document.getElementById('m_tab3').style.background='#6366f1';document.getElementById('sec_algebra').style.display='block';}
+      else{document.getElementById('m_tab4').style.background='#6366f1';document.getElementById('sec_bodmas').style.display='block';}
+    }
+
+    function startVoice() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Browser mein Voice Recognition support nahi hai.");
+        return;
+      }
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'hi-IN';
+      const btn = document.getElementById('mic_btn');
+      const txt = document.getElementById('mic_text');
+      const box = document.getElementById('custom_question');
+
+      btn.classList.add('listening');
+      txt.innerText = "सुन रहा हूँ... बोलिए";
+
+      recognition.onresult = function(event) {
+        box.value = event.results[0][0].transcript;
+        btn.classList.remove('listening');
+        txt.innerText = "बोलकर लिखें";
+      };
+
+      recognition.onerror = function() {
+        btn.classList.remove('listening');
+        txt.innerText = "बोलकर लिखें";
+      };
+
+      recognition.start();
+    }
+
+    async function solveRealMath() {
+      var q = document.getElementById('custom_question').value.trim();
+      var out = document.getElementById('math_output');
+      if (!q) {
+        out.innerHTML = "<span style='color:#ef4444;'>कृपया सवाल लिखें या माइक से बोलें!</span>";
+        return;
+      }
+      out.innerText = "सवाल का गणितीय विश्लेषण व स्टेप-बाय-स्टेप हल जारी है...";
+      try {
+        var res = await fetch('/math-calc', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({type: 'smart_solve', question: q})
+        });
+        var d = await res.json();
+        out.innerHTML = d.explanation;
+      } catch(e) {
+        out.innerText = "हल करने में समस्या आई।";
+      }
+    }
+
+    async function unlockSheets(){
+      var key = document.getElementById('sub_key').value.trim();
+      var chap = document.getElementById('sheet_chap').value;
+      var out = document.getElementById('math_output');
+      out.innerText = "PostgreSQL डेटाबेस से सब्सक्रिप्शन वेरीफाई हो रहा है...";
+      try{
+        var res = await fetch('/unlock-sheet', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({api_key: key, chapter: chap})
+        });
+        var d = await res.json();
+        if(d.status === 'UNLOCKED'){
+          out.innerHTML = d.content;
+        } else {
+          out.innerHTML = "<span style='color:#ef4444;'>❌ " + d.reason + "</span><br><br><a href='/subscription' class='btn' style='max-width:200px;margin-top:10px;'>सब्सक्रिप्शन एक्टिवेट करें</a>";
+        }
+      }catch(e){
+        out.innerText = "वेरिफिकेशन में समस्या आई।";
+      }
+    }
+
+    async function solveAlgebra(){
+      var a = Number(document.getElementById('alg_a').value);
+      var b = Number(document.getElementById('alg_b').value);
+      var c = Number(document.getElementById('alg_c').value);
+      var out = document.getElementById('math_output');
+      out.innerText = "हल तैयार हो रहा है...";
+      try{
+        var res = await fetch('/math-calc', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({type:'algebra', a:a, b:b, c:c})
+        });
+        var d = await res.json();
+        out.innerHTML = d.explanation;
+      }catch(e){out.innerText = "Equation Error.";}
+    }
+
+    async function solveBodmas(){
+      var expr = document.getElementById('calc_screen').value;
+      var out = document.getElementById('math_output');
+      out.innerText = "BODMAS गणना जारी है...";
+      try{
+        var res = await fetch('/math-calc', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({type:'bodmas', expr:expr})
+        });
+        var d = await res.json();
+        if(d.status==='SUCCESS'){
+          out.innerHTML = "🔢 <b>समीकरण:</b> " + expr + "<br>🎯 <b>अंतिम उत्तर:</b> <span style='color:#38bdf8;font-size:20px;font-weight:700;'>" + d.result + "</span>";
+          document.getElementById('calc_screen').value = d.result;
+        } else { out.innerText = "Error: " + d.reason; }
+      }catch(e){out.innerText = "Calculation error.";}
+    }
+    </script>
+    """
+    return render_template_string(T_HEAD + content + T_FOOT)
+
+# ==========================================
+# 6. SMART TOOLS & PAYMENT (₹99 QR CODE)
+# ==========================================
+@app.route("/smart-tools")
+def smart_tools():
+    content = """
+    <div class="card" style="max-width:720px;margin:0 auto;">
+      <h2>🧰 Daily Life Smart Tools</h2>
+      <p style="color:#94a3b8;font-size:13px;margin-bottom:18px;">रोज़मर्रा के जीवन, बिल, लोन और व्यापार के लिए 5 आसान कैलकुलेटर।</p>
+      
+      <div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;">
+        <button id="st_tab1" class="btn" style="flex:1;background:#f59e0b;font-size:12px;padding:8px 6px;" onclick="setToolTab('gst')">🧾 GST Calc</button>
+        <button id="st_tab2" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 6px;" onclick="setToolTab('emi')">🏦 Loan EMI</button>
+        <button id="st_tab3" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 6px;" onclick="setToolTab('split')">👥 Bill Split</button>
+        <button id="st_tab4" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 6px;" onclick="setToolTab('discount')">🏷️ Discount</button>
+        <button id="st_tab5" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 6px;" onclick="setToolTab('fuel')">⛽ Fuel Trip</button>
+      </div>
+
+      <div id="tool_gst">
+        <label>मूल राशि (Original Amount ₹)</label>
+        <input type="number" id="gst_amt" value="5000">
+        <label>GST दर (%)</label>
+        <select id="gst_rate">
+          <option value="5">5%</option><option value="12">12%</option><option value="18" selected>18%</option><option value="28">28%</option>
+        </select>
+        <label>प्रकार</label>
+        <select id="gst_type">
+          <option value="add">GST जोड़ें (Exclusive)</option><option value="remove">GST हटाएँ (Inclusive)</option>
+        </select>
+        <button class="btn btn-green" onclick="calcGST()">GST निकालें</button>
+      </div>
+
+      <div id="tool_emi" style="display:none;">
+        <label>लोन राशि (₹)</label><input type="number" id="emi_p" value="500000">
+        <label>वार्षिक ब्याज दर (%)</label><input type="number" id="emi_r" value="10.5">
+        <label>अवधि (वर्ष)</label><input type="number" id="emi_y" value="5">
+        <button class="btn btn-green" onclick="calcEMI()">EMI निकालें</button>
+      </div>
+
+      <div id="tool_split" style="display:none;">
+        <label>कुल बिल (₹)</label><input type="number" id="split_bill" value="2400">
+        <label>कुल लोग</label><input type="number" id="split_people" value="4">
+        <label>टिप (₹)</label><input type="number" id="split_tip" value="100">
+        <button class="btn btn-green" onclick="calcSplit()">हिस्सा निकालें</button>
+      </div>
+
+      <div id="tool_discount" style="display:none;">
+        <label>MRP (₹)</label><input type="number" id="disc_price" value="1999">
+                c.execute("SELECT * FROM users WHERE username = %s", (u,))
+        if c.fetchone():
+            c.close(); conn.close()
+            return jsonify({"status": "FAILED", "reason": "Username pehle se maujood hai! Dusra chunein."})
+        c.execute("INSERT INTO users (username, password, tier) VALUES (%s, %s, %s)", (u, p, "starter"))
+        conn.commit()
+        session["username"] = u
+        c.close(); conn.close()
+        return jsonify({"status": "SUCCESS", "message": "Account safaltapoorvak ban gaya! Terminal par redirect kar rahe hain..."})
+
+    else:
+        c.execute("SELECT * FROM users WHERE username = %s AND password = %s", (u, p))
+        row = c.fetchone()
+        c.close(); conn.close()
+        if row:
+            session["username"] = u
+            return jsonify({"status": "SUCCESS", "message": "Login Safal! Welcome back, " + u})
+        else:
+            return jsonify({"status": "FAILED", "reason": "Galat Username ya Password!"})
+
+@app.route("/logout")
+def logout():
+    session.pop("username", None)
+    return redirect("/login")
+
+# ==========================================
+# 4. LIVE STOCK MARKET & AI BUY/SELL ENGINE
+# ==========================================
+@app.route("/live-market")
+def live_market():
+    content = """
+    <div class="card" style="max-width:980px;margin:0 auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+        <div>
+          <h2>📊 Live Share Market & AI Advisor</h2>
+          <p style="color:#94a3b8;font-size:13px;">Real-time chart aur AI Buy/Sell signal: Kab khareedein aur kab na khareedein.</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <a href="/news" class="btn" style="background:#ef4444;font-size:12px;padding:6px 12px;width:auto;"><i class="fa-solid fa-bolt"></i> Live Breaking News</a>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,0.15);color:#34d399;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;">
+            <span style="width:8px;height:8px;background:#10b981;border-radius:50%;display:inline-block;"></span> LIVE NSE/BSE
+          </span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:14px;">
+        <div>
+          <label style="font-size:12px;color:#94a3b8;">Stock / Index Chunein:</label>
+          <select id="market_symbol" onchange="updateLiveChart()">
+            <option value="NSE:NIFTY" selected>NIFTY 50 (NSE Index)</option>
+            <option value="BSE:SENSEX">SENSEX (BSE Index)</option>
+            <option value="NSE:RELIANCE">Reliance Industries (RELIANCE)</option>
+            <option value="NSE:TCS">Tata Consultancy Services (TCS)</option>
+            <option value="NSE:HDFCBANK">HDFC Bank (HDFCBANK)</option>
+            <option value="NSE:INFY">Infosys (INFY)</option>
+            <option value="NSE:TATAMOTORS">Tata Motors (TATAMOTORS)</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:flex-end;">
+          <button class="btn btn-green" onclick="getAISignal()" style="margin-bottom:14px;">
+            🤖 AI Se Signal Poochein
+          </button>
+        </div>
+      </div>
+
+      <div style="height:420px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);margin-bottom:18px;">
+        <div id="tradingview_chart" style="height:100%;width:100%;"></div>
+      </div>
+
+      <div id="ai_signal_box" class="out" style="line-height:1.8;">
+        Stock chun kar <b>"AI Se Signal Poochein"</b> button par tap karein...
+      </div>
+    </div>
+
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <script>
+    function initChart(symbol) {
+      document.getElementById('tradingview_chart').innerHTML = '';
+      new TradingView.widget({
+        "autosize": true,
+        "symbol": symbol,
+        "interval": "D",
+        "timezone": "Asia/Kolkata",
+        "theme": "dark",
+        "style": "1",
+        "locale": "in",
+        "toolbar_bg": "#030712",
+        "enable_publishing": false,
+        "hide_side_toolbar": false,
+        "allow_symbol_change": true,
+        "container_id": "tradingview_chart"
+      });
+    }
+
+    function updateLiveChart() {
+      const sym = document.getElementById('market_symbol').value;
+      initChart(sym);
+    }
+
+    window.onload = function() {
+      initChart("NSE:NIFTY");
+    };
+
+    async function getAISignal() {
+      const sym = document.getElementById('market_symbol').value;
+      const out = document.getElementById('ai_signal_box');
+      out.innerText = "Technical indicators (RSI, Moving Averages, Support/Resistance) scan ho rahe hain...";
+
+      try {
+        const res = await fetch('/market-ai-signal', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({symbol: sym})
+        });
+        const d = await res.json();
+        out.innerHTML = d.analysis;
+      } catch(e) {
+        out.innerText = "Signal nikalne mein error aaya.";
+      }
+    }
+    </script>
+    """
+    return render_template_string(T_HEAD + content + T_FOOT)
+
+# ==========================================
+# 5. MATH MASTER & VOICE ENGINE
+# ==========================================
+@app.route("/math-master")
+def math_master():
+    content = """
+    <div class="card" style="max-width:700px;margin:0 auto;">
+      <h2>🧮 DEX AIR Math Master (Voice & Real Solver)</h2>
+      <p style="color:#94a3b8;font-size:13px;margin-bottom:18px;">बोलकर या लिखकर सवाल हल करें, स्टेप-बाय-स्टेप विवरण और प्रैक्टिस शीट्स पाएँ।</p>
+      
+      <div style="display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;">
+        <button id="m_tab1" class="btn" style="flex:1;background:#6366f1;font-size:12px;padding:8px 6px;" onclick="setMathTab('ai_solve')">🎤 बोलकर / लिखकर हल</button>
+        <button id="m_tab2" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 6px;" onclick="setMathTab('sheets')">🔒 प्रैक्टिस शीट्स (Sub)</button>
+        <button id="m_tab3" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 6px;" onclick="setMathTab('algebra')">📈 Algebra</button>
+        <button id="m_tab4" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 6px;" onclick="setMathTab('bodmas')">➕ BODMAS</button>
+      </div>
+
+      <div id="sec_ai_solve">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <label style="font-size:13px;color:#38bdf8;font-weight:700;">सवाल लिखें या माइक से बोलें:</label>
+          <button id="mic_btn" class="mic-btn" type="button" onclick="startVoice()"><i class="fa-solid fa-microphone"></i> <span id="mic_text">बोलकर लिखें</span></button>
+        </div>
+
+        <textarea id="custom_question" rows="3" placeholder="यहाँ बोलें या टाइप करें... जैसे: एक व्यक्ति 10km की रफ़्तार से जा रहा है वह 58km कितने देर में पहुँचेगा?"></textarea>
+
+        <label style="font-size:13px;color:#38bdf8;font-weight:700;">या सवाल की फ़ोटो अपलोड करें:</label>
+        <input type="file" id="math_photo" accept="image/*" style="background:#1e293b;padding:8px;border:1px dashed #38bdf8;">
+
+        <button class="btn btn-purple" onclick="solveRealMath()"><i class="fa-solid fa-calculator"></i> स्टेप-बाय-स्टेप हिंदी में हल निकालें</button>
+      </div>
+
+      <div id="sec_sheets" style="display:none;">
+        <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:14px;color:#f87171;margin-bottom:12px;text-align:center;">
+          🔒 <b>प्रीमियम प्रैक्टिस शीट्स लॉक्ड हैं</b><br>
+          <span style="font-size:12px;color:#cbd5e1;">A to Z चैप्टर्स के प्रैक्टिस सवाल और हल केवल Pro/Enterprise मेंबर्स के लिए हैं।</span>
+        </div>
+
+        <label>अपनी Pro API Key दर्ज करें:</label>
+        <input type="text" id="sub_key" placeholder="dex_master_live_key_999 या आपकी Pro Key">
+
+        <label>प्रैक्टिस चैप्टर चुनें:</label>
+        <select id="sheet_chap">
+          <option value="arithmetic">अंकगणित - 50 महत्वपूर्ण प्रश्न व हल</option>
+          <option value="algebra">बीजगणित - समीकरण एवं बहुपद वर्कशीट</option>
+          <option value="trig">त्रिकोणमिति - सर्वसमिकाएँ व ऊँचाई-दूरी</option>
+          <option value="geometry">क्षेत्रमिति - 2D और 3D फॉर्मूला प्रैक्टिस शीट</option>
+        </select>
+
+        <button class="btn btn-green" onclick="unlockSheets()">प्रैक्टिस शीट अनलॉक करें</button>
+        <div style="text-align:center;margin-top:10px;">
+          <a href="/subscription" style="color:#38bdf8;font-size:12px;text-decoration:none;">₹99 में Pro Plan लेने के लिए यहाँ क्लिक करें →</a>
+        </div>
+      </div>
+
+      <div id="sec_algebra" style="display:none;">
+        <p style="font-size:13px;color:#38bdf8;margin-bottom:10px;">द्विघात समीकरण (Quadratic Equation): <b>ax² + bx + c = 0</b></p>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <div><label>a</label><input type="number" id="alg_a" value="1"></div>
+          <div><label>b</label><input type="number" id="alg_b" value="-5"></div>
+          <div><label>c</label><input type="number" id="alg_c" value="6"></div>
+        </div>
+        <button class="btn btn-purple" onclick="solveAlgebra()">हल निकालें</button>
+      </div>
+
+      <div id="sec_bodmas" style="display:none;">
+        <label style="font-size:12px;color:#94a3b8;">BODMAS कीपैड डिस्प्ले</label>
+        <input type="text" id="calc_screen" value="50 + (12 * 8) - (100 / 4)" style="font-size:18px;letter-spacing:1px;font-weight:700;text-align:right;" placeholder="0">
+        <div class="calc-grid">
+          <button class="c-btn c-action" onclick="pressKey('C')">C</button>
+          <button class="c-btn c-op" onclick="pressKey('(')">(</button>
+          <button class="c-btn c-op" onclick="pressKey(')')">)</button>
+          <button class="c-btn c-action" onclick="pressKey('DEL')">⌫</button>
+          <button class="c-btn" onclick="pressKey('7')">7</button>
+          <button class="c-btn" onclick="pressKey('8')">8</button>
+          <button class="c-btn" onclick="pressKey('9')">9</button>
+          <button class="c-btn c-op" onclick="pressKey('/')">÷</button>
+          <button class="c-btn" onclick="pressKey('4')">4</button>
+          <button class="c-btn" onclick="pressKey('5')">5</button>
+          <button class="c-btn" onclick="pressKey('6')">6</button>
+          <button class="c-btn c-op" onclick="pressKey('*')">×</button>
+          <button class="c-btn" onclick="pressKey('1')">1</button>
+          <button class="c-btn" onclick="pressKey('2')">2</button>
+          <button class="c-btn" onclick="pressKey('3')">3</button>
+          <button class="c-btn c-op" onclick="pressKey('-')">−</button>
+          <button class="c-btn" onclick="pressKey('0')">0</button>
+          <button class="c-btn" onclick="pressKey('.')">.</button>
+          <button class="c-btn" onclick="pressKey('**')">xʸ</button>
+          <button class="c-btn" onclick="pressKey('+')">+</button>
           <button class="c-btn c-equals" onclick="solveBodmas()">= Evaluate</button>
           <button class="c-btn c-op" style="grid-column:span 2;" onclick="pressKey('%')">% Modulo</button>
         </div>
@@ -873,7 +1261,7 @@ def subscription():
     return render_template_string(T_HEAD + content + T_FOOT)
 
 # ==========================================
-# 7. BACKEND ROUTING & ENGINES
+# 7. BACKEND ENGINES
 # ==========================================
 @app.route("/market-ai-signal", methods=["POST"])
 def market_ai_signal():
@@ -1070,4 +1458,3 @@ def execute():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
-    
