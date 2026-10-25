@@ -1302,8 +1302,27 @@ def math_master():
     return render_template_string(T_HEAD + content + T_FOOT)
     
 # ==========================================
-# 11. SUBSCRIPTION & SERVER RUN
+# 11. SMART TOOLS & SUBSCRIPTION
 # ==========================================
+@app.route("/smart-tools")
+def smart_tools():
+    content = """
+    <div class="card" style="max-width:720px;margin:0 auto;">
+      <h2>Daily Smart Tools</h2>
+      <div style="display:flex;gap:6px;margin:14px 0;">
+        <button class="btn btn-green" style="flex:1;" onclick="calcG()">GST (18%)</button>
+        <button class="btn btn-green" style="flex:1;" onclick="calcE()">EMI</button>
+      </div>
+      <input type="number" id="in_p" value="50000">
+      <div id="st_out" class="out">गणना देखने के लिए ऊपर क्लिक करें...</div>
+    </div>
+    <script>
+    function calcG(){ var v = Number(document.getElementById('in_p').value); document.getElementById('st_out').innerHTML = "Base: ₹"+v+" | <b>Total (18% GST): ₹"+(v*1.18).toFixed(2)+"</b>"; }
+    function calcE(){ var p = Number(document.getElementById('in_p').value), r = (10.5/12)/100, n = 36; var emi = (p*r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1); document.getElementById('st_out').innerHTML = "<b>Monthly EMI: ₹"+Math.round(emi)+" / माह</b>"; }
+    </script>
+    """
+    return render_template_string(T_HEAD + content + T_FOOT)
+
 @app.route("/subscription")
 def subscription():
     content = """
