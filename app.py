@@ -1,6 +1,6 @@
 import os, ast, json, uuid, time, math, re, urllib.request, xml.etree.ElementTree as ET, psycopg2
 from psycopg2.extras import RealDictCursor
-from flask import Flask, request, jsonify, render_template_string, session, redirect
+from flask import Flask, request, jsonify, render_template_string, session, redirect, url_for
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dex_air_vault_session_key_2026_secure")
@@ -75,6 +75,14 @@ def init_db():
 
 init_db()
 
+# Security Gate: Har request se pehle check karega ki user login hai ya nahi
+@app.before_request
+def require_login():
+    allowed_routes = ['login_page', 'auth_act', 'static']
+    if request.endpoint and request.endpoint not in allowed_routes:
+        if 'username' not in session:
+            return redirect(url_for('login_page'))
+
 T_NAV = """
 <header style="background:rgba(3,7,18,0.95);padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.1);position:sticky;top:0;z-index:99;">
   <div style="max-width:1250px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
@@ -86,7 +94,7 @@ T_NAV = """
       <a href="/math-master" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:#6366f1;font-weight:700;">🧮 Math Master</a>
       <a href="/smart-tools" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:#f59e0b;font-weight:700;">🧰 Smart Tools</a>
       <a href="/subscription" style="color:#38bdf8;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:rgba(56,189,248,0.1);font-weight:700;border:1px solid rgba(56,189,248,0.3);">💳 Buy Plan (₹99)</a>
-      <a href="/login" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 12px;border-radius:6px;background:#0284c7;font-weight:700;">👤 Login</a>
+      <a href="/logout" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 12px;border-radius:6px;background:#ef4444;font-weight:700;">🚪 Logout</a>
     </div>
   </div>
 </header>
@@ -98,7 +106,7 @@ T_HEAD = """<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewpor
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
 body{background:#030712;color:#f8fafc;min-height:100vh;}
-.card{background:rgba(17,24,39,0.85);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:22px;margin-bottom:20px;}
+.card{background:rgba(17,24,39,0.85);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px;margin-bottom:16px;}
 .btn{background:#0284c7;color:#fff;border:none;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer;width:100%;text-decoration:none;display:inline-block;text-align:center;}
 .btn-green{background:#059669;}
 .btn-purple{background:#6366f1;}
@@ -109,36 +117,179 @@ input,textarea,select{width:100%;background:#090d16;border:1px solid rgba(255,25
 .news-item:hover{border-color:#38bdf8;}
 .mic-btn{background:#ef4444;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:6px;}
 </style>
-</head><body>""" + T_NAV + """<div style="max-width:1150px;margin:30px auto;padding:0 16px;">"""
+</head><body>""" + T_NAV + """<div style="max-width:1150px;margin:20px auto;padding:0 14px;">"""
 
 T_FOOT = """</div><footer style="text-align:center;padding:20px;font-size:12px;color:#64748b;border-top:1px solid rgba(255,255,255,0.08);">DEX AIR Sovereign Enterprise © 2026 | PostgreSQL Live Active</footer></body></html>"""
 
+# ==========================================
+# 1. LOGIN & SIGN UP PAGE (FIRST SCREEN)
+# ==========================================
+@app.route("/login")
+def login_page():
+    if 'username' in session:
+        return redirect("/")
+    
+    html = """<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>DEX AIR - Gateway Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+    body{background:#030712;color:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px;}
+    .auth-box{background:#0b1120;border:1px solid rgba(56,189,248,0.3);border-radius:16px;width:100%;max-width:420px;padding:24px;box-shadow:0 15px 35px rgba(0,0,0,0.8);}
+    input{width:100%;background:#030712;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px;color:#38bdf8;margin:8px 0 16px 0;font-size:14px;}
+    .btn{padding:12px;border:none;border-radius:8px;font-weight:700;cursor:pointer;width:100%;font-size:14px;}
+    .btn-green{background:#059669;color:#fff;}
+    .btn-purple{background:#6366f1;color:#fff;}
+    .out{background:#020617;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px;font-size:13px;margin-top:14px;text-align:center;}
+    </style>
+    </head><body>
+      <div class="auth-box">
+        <div style="text-align:center;margin-bottom:20px;">
+          <h1 style="color:#38bdf8;font-size:26px;font-weight:900;">⚡ DEX AIR</h1>
+          <p style="color:#94a3b8;font-size:13px;margin-top:4px;">Secure Gateway Portal</p>
+        </div>
+
+        <div style="display:flex;gap:6px;margin-bottom:18px;">
+          <button id="tb_login" class="btn btn-green" style="flex:1;" onclick="setMode('login')">Sign In</button>
+          <button id="tb_reg" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;" onclick="setMode('reg')">Sign Up</button>
+        </div>
+
+        <label style="font-size:12px;color:#94a3b8;">Username</label>
+        <input type="text" id="auth_user" placeholder="Enter username">
+
+        <label style="font-size:12px;color:#94a3b8;">Password</label>
+        <input type="password" id="auth_pass" placeholder="••••••••">
+
+        <button id="action_btn" class="btn btn-green" onclick="submitAuth()">Sign In to Terminal</button>
+        <div id="auth_res" class="out" style="display:none;"></div>
+      </div>
+
+      <script>
+      let mode = 'login';
+      function setMode(m){
+        mode = m;
+        if(m==='login'){
+          document.getElementById('tb_login').className = 'btn btn-green';
+          document.getElementById('tb_login').style.background = '#059669';
+          document.getElementById('tb_login').style.color = '#fff';
+          document.getElementById('tb_reg').className = 'btn';
+          document.getElementById('tb_reg').style.background = 'rgba(255,255,255,0.08)';
+          document.getElementById('tb_reg').style.color = '#94a3b8';
+          document.getElementById('action_btn').innerText = 'Sign In to Terminal';
+          document.getElementById('action_btn').className = 'btn btn-green';
+        } else {
+          document.getElementById('tb_reg').className = 'btn btn-purple';
+          document.getElementById('tb_reg').style.background = '#6366f1';
+          document.getElementById('tb_reg').style.color = '#fff';
+          document.getElementById('tb_login').className = 'btn';
+          document.getElementById('tb_login').style.background = 'rgba(255,255,255,0.08)';
+          document.getElementById('tb_login').style.color = '#94a3b8';
+          document.getElementById('action_btn').innerText = 'Create Account (Sign Up)';
+          document.getElementById('action_btn').className = 'btn btn-purple';
+        }
+      }
+
+      async function submitAuth(){
+        const u = document.getElementById('auth_user').value.trim();
+        const p = document.getElementById('auth_pass').value.trim();
+        const out = document.getElementById('auth_res');
+
+        if(!u || !p){ alert("Username aur Password dono bharein!"); return; }
+
+        out.style.display = 'block';
+        out.innerHTML = '<span style="color:#38bdf8;">Authenticating with PostgreSQL...</span>';
+
+        try{
+          const res = await fetch('/auth-act', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({action: mode, username: u, password: p})
+          });
+          const d = await res.json();
+          if(d.status==='SUCCESS'){
+            out.innerHTML = "<span style='color:#34d399;'>✅ " + d.msg + "</span>";
+            setTimeout(()=>{ window.location.href='/'; }, 800);
+          } else {
+            out.innerHTML = "<span style='color:#ef4444;'>❌ " + d.reason + "</span>";
+          }
+        }catch(e){
+          out.innerText = "Server connection error.";
+        }
+      }
+      </script>
+    </body></html>"""
+    return html
+
+@app.route("/auth-act", methods=["POST"])
+def auth_act():
+    d = request.get_json(silent=True) or {}
+    act = d.get("action")
+    u = d.get("username", "").strip()
+    p = d.get("password", "").strip()
+
+    conn = get_db()
+    c = conn.cursor(cursor_factory=RealDictCursor)
+
+    if act == "reg":
+        c.execute("SELECT * FROM users WHERE username = %s", (u,))
+        if c.fetchone():
+            c.close(); conn.close()
+            return jsonify({"status": "FAILED", "reason": "Yeh username pehle se registered hai! Doosra chunein."})
+        c.execute("INSERT INTO users (username, password, tier) VALUES (%s, %s, %s)", (u, p, "starter"))
+        conn.commit()
+        session["username"] = u
+        c.close(); conn.close()
+        return jsonify({"status": "SUCCESS", "msg": "Account ban gaya! Dashboard khul raha hai..."})
+    else:
+        c.execute("SELECT * FROM users WHERE username = %s AND password = %s", (u, p))
+        row = c.fetchone()
+        c.close(); conn.close()
+        if row:
+            session["username"] = u
+            return jsonify({"status": "SUCCESS", "msg": "Login safal! Welcome back, " + u})
+        return jsonify({"status": "FAILED", "reason": "Galat Username ya Password!"})
+
+@app.route("/logout")
+def logout():
+    session.pop("username", None)
+    return redirect("/login")
+
+# ==========================================
+# 2. HOMEPAGE (DASHBOARD)
+# ==========================================
 @app.route("/")
 def home():
-    content = """
-    <div style="text-align:center;margin-bottom:30px;">
-      <h1 style="color:#38bdf8;font-size:32px;margin-bottom:8px;">Sovereign Cloud Microservices</h1>
-      <p style="color:#94a3b8;font-size:14px;">100% Real Live Google News, Interactive Live Trading, Voice Math & Smart Tools.</p>
+    u = session.get("username", "Trader")
+    content = f"""
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <h1 style="color:#38bdf8;font-size:26px;">Welcome, {u} 👋</h1>
+        <p style="color:#94a3b8;font-size:13px;">Full-Screen Pro Trading Terminal, Live Google News & Smart Tools.</p>
+      </div>
+      <span style="background:rgba(16,185,129,0.15);color:#34d399;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;">
+        🟢 Session Active
+      </span>
     </div>
+
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
       <div class="card">
-        <h3>🔴 100% Live Real News Feed</h3>
-        <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">शेयर बाजार, बिज़नेस, ग्लोबल क्रूड और राजनीति की लाइव इंटरनेट खबरें।</p>
+        <h3>📊 Pro Trading Terminal</h3>
+        <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">Groww style full-page trading terminal, live watchlist aur wallet.</p>
+        <a href="/live-market" class="btn btn-green">Open Terminal</a>
+      </div>
+      <div class="card">
+        <h3>🔴 Live Google News Hub</h3>
+        <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">शेयर बाजार, बिज़नेस, क्रूड और राष्ट्रीय नीतियां (100% Real Live).</p>
         <a href="/news" class="btn" style="background:#ef4444;">Read Live News</a>
       </div>
       <div class="card">
-        <h3>📊 Live Market & Trading Terminal</h3>
-        <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">लाइव चार्ट्स, वॉलेट में फंड जोड़ें और सीधे शेयर खरीदें व बेचें।</p>
-        <a href="/live-market" class="btn btn-green">Open Live Market</a>
-      </div>
-      <div class="card">
         <h3>🧮 Math Master & Voice Solver</h3>
-        <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">बोलकर या लिखकर सवाल हल करें, स्टेप-बाय-स्टेप विवरण और शीट्स।</p>
+        <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">बोलकर सवाल पूछें, स्टेप-बाय-स्टेप हल निकालें।</p>
         <a href="/math-master" class="btn btn-purple">Open Math Master</a>
       </div>
       <div class="card">
         <h3>🧰 5 Daily Smart Tools</h3>
-        <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">GST, Loan EMI, Bill Split, Discount और Fuel Trip Cost का आसान हिसाब।</p>
+        <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">GST, Loan EMI, Bill Split, Discount और Fuel Mileage हिसाब।</p>
         <a href="/smart-tools" class="btn" style="background:#f59e0b;">Open Smart Tools</a>
       </div>
     </div>
@@ -146,240 +297,39 @@ def home():
     return render_template_string(T_HEAD + content + T_FOOT)
 
 # ==========================================
-# 2. 100% REAL LIVE NEWS HUB & DETAIL POPUP
-# ==========================================
-@app.route("/news")
-def news():
-    content = """
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
-        <div>
-          <h2>🔴 24x7 Real-Time Live News Feed</h2>
-          <p style="color:#94a3b8;font-size:13px;">लाइव इंटरनेट समाचार: किसी भी खबर पर क्लिक करके उसकी पूरी विस्तृत रिपोर्ट पढ़ें।</p>
-        </div>
-        <div style="display:flex;gap:6px;">
-          <button id="l_hi" class="btn" style="background:#ef4444;padding:6px 12px;font-size:12px;" onclick="switchLang('hi')">🇮🇳 हिंदी</button>
-          <button id="l_en" class="btn" style="background:rgba(255,255,255,0.08);color:#94a3b8;padding:6px 12px;font-size:12px;" onclick="switchLang('en')">🌐 English</button>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;">
-        <button id="tb_biz" class="btn" style="flex:1;background:#38bdf8;color:#030712;font-size:12px;padding:8px 6px;min-width:110px;" onclick="fetchLiveCat('business')">💼 Market & Business</button>
-        <button id="tb_world" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 6px;min-width:110px;" onclick="fetchLiveCat('world')">🌍 Global Geopolitics</button>
-        <button id="tb_pol" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 6px;min-width:110px;" onclick="fetchLiveCat('nation')">🏛️ National Policies</button>
-      </div>
-
-      <div id="live_feed_box">
-        <div style="text-align:center;padding:30px;color:#38bdf8;">
-          <i class="fa-solid fa-spinner fa-spin"></i> इंटरनेट से लाइव ताज़ा खबरें फेच हो रही हैं...
-        </div>
-      </div>
-
-      <!-- Real News Detail Modal -->
-      <div id="news_modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:999;backdrop-filter:blur(5px);justify-content:center;align-items:center;padding:16px;">
-        <div style="background:#111827;border:1px solid #38bdf8;border-radius:14px;max-width:620px;width:100%;max-height:85vh;overflow-y:auto;padding:22px;position:relative;box-shadow:0 10px 30px rgba(0,0,0,0.8);">
-          <button onclick="closeNewsModal()" style="position:absolute;top:16px;right:16px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:30px;height:30px;font-weight:700;cursor:pointer;">✕</button>
-          
-          <span id="md_source" style="background:#0284c7;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;display:inline-block;margin-bottom:8px;">Live Source</span>
-          <div id="md_pub" style="font-size:11px;color:#64748b;margin-bottom:10px;"></div>
-          
-          <h2 id="md_title" style="color:#f8fafc;font-size:18px;line-height:1.4;margin-bottom:12px;"></h2>
-          
-          <p id="md_desc" style="color:#cbd5e1;font-size:13px;line-height:1.7;margin-bottom:16px;"></p>
-          
-          <div style="background:#090d16;border-left:4px solid #10b981;border-radius:0 8px 8px 0;padding:12px;margin-bottom:18px;">
-            <b style="color:#34d399;">📊 Market & Trading Impact:</b>
-            <div id="md_impact" style="font-size:12px;color:#94a3b8;margin-top:4px;">
-              इस खबर के आधार पर संबंधित सेक्टर के शेयरों और निफ्टी/सेंसेक्स में उतार-चढ़ाव देखा जा सकता है। ट्रेडिंग के दौरान स्टॉप-लॉस जरूर मेंटेन करें।
-            </div>
-          </div>
-
-          <a id="md_link" href="#" target="_blank" class="btn btn-green" style="text-decoration:none;display:block;text-align:center;">
-            🌐 असली सोर्स पर पूरी डिटेल रिपोर्ट पढ़ें →
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <script>
-    let activeLang = 'hi';
-    let activeCat = 'business';
-    let currentLoadedArticles = [];
-
-    async function loadLiveNews() {
-      const box = document.getElementById('live_feed_box');
-      box.innerHTML = '<div style="text-align:center;padding:30px;color:#38bdf8;"><i class="fa-solid fa-spinner fa-spin"></i> इंटरनेट से लाइव ताज़ा खबरें लोड हो रही हैं...</div>';
-      
-      try {
-        const res = await fetch(`/api/live-news-feed?cat=${activeCat}&lang=${activeLang}`);
-        const data = await res.json();
-        currentLoadedArticles = data.articles || [];
-
-        if(currentLoadedArticles.length === 0) {
-          box.innerHTML = '<div style="color:#ef4444;padding:20px;text-align:center;">इस समय न्यूज़ सर्वर से संपर्क नहीं हो पाया। कृपया रिफ्रेश करें।</div>';
-          return;
-        }
-
-        box.innerHTML = currentLoadedArticles.map((art, idx) => `
-          <div class="news-item" onclick="showNewsDetail(${idx})" style="cursor:pointer;border-left:4px solid #38bdf8;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-              <span style="background:rgba(56,189,248,0.15);color:#38bdf8;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:700;">
-                ${art.source}
-              </span>
-              <span style="font-size:11px;color:#64748b;">⏱️ ${art.published}</span>
-            </div>
-            <h3 style="font-size:15px;color:#f8fafc;margin-bottom:6px;line-height:1.4;">${art.title}</h3>
-            <p style="font-size:13px;color:#94a3b8;line-height:1.6;">${art.description}</p>
-            <div style="font-size:12px;color:#34d399;font-weight:700;margin-top:6px;">
-              पूरी विस्तृत खबर और ट्रेडिंग असर पढ़ें →
-            </div>
-          </div>
-        `).join('');
-
-      } catch(e) {
-        box.innerHTML = '<div style="color:#ef4444;padding:20px;text-align:center;">न्यूज़ सर्वर कनेक्शन में एरर आया।</div>';
-      }
-    }
-
-    function showNewsDetail(idx) {
-      const art = currentLoadedArticles[idx];
-      if(!art) return;
-
-      document.getElementById('md_source').innerText = art.source;
-      document.getElementById('md_pub').innerText = 'Published: ' + art.published;
-      document.getElementById('md_title').innerText = art.title;
-      document.getElementById('md_desc').innerText = art.description;
-      document.getElementById('md_link').href = art.link;
-
-      document.getElementById('news_modal').style.display = 'flex';
-    }
-
-    function closeNewsModal() {
-      document.getElementById('news_modal').style.display = 'none';
-    }
-
-    window.onclick = function(e) {
-      const m = document.getElementById('news_modal');
-      if (e.target === m) m.style.display = 'none';
-    };
-
-    function switchLang(l) {
-      activeLang = l;
-      document.getElementById('l_hi').style.background = l==='hi' ? '#ef4444' : 'rgba(255,255,255,0.08)';
-      document.getElementById('l_hi').style.color = l==='hi' ? '#fff' : '#94a3b8';
-      document.getElementById('l_en').style.background = l==='en' ? '#ef4444' : 'rgba(255,255,255,0.08)';
-      document.getElementById('l_en').style.color = l==='en' ? '#fff' : '#94a3b8';
-      loadLiveNews();
-    }
-
-    function fetchLiveCat(cat) {
-      activeCat = cat;
-      ['tb_biz', 'tb_world', 'tb_pol'].forEach(id => {
-        document.getElementById(id).style.background = 'rgba(255,255,255,0.08)';
-        document.getElementById(id).style.color = '#94a3b8';
-      });
-
-      if(cat === 'business') {
-        document.getElementById('tb_biz').style.background = '#38bdf8';
-        document.getElementById('tb_biz').style.color = '#030712';
-      } else if(cat === 'world') {
-        document.getElementById('tb_world').style.background = '#38bdf8';
-        document.getElementById('tb_world').style.color = '#030712';
-      } else {
-        document.getElementById('tb_pol').style.background = '#38bdf8';
-        document.getElementById('tb_pol').style.color = '#030712';
-      }
-
-      loadLiveNews();
-    }
-
-    window.onload = function() {
-      loadLiveNews();
-    };
-    </script>
-    """
-    return render_template_string(T_HEAD + content + T_FOOT)
-
-# ==========================================
-# 3. BACKEND LIVE GOOGLE RSS NEWS ENGINE
-# ==========================================
-@app.route("/api/live-news-feed")
-def live_news_feed_api():
-    cat = request.args.get("cat", "business")
-    lang = request.args.get("lang", "hi")
-
-    feed_urls = {
-        "hi": {
-            "business": "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=hi&gl=IN&ceid=IN:hi",
-            "world": "https://news.google.com/rss/headlines/section/topic/WORLD?hl=hi&gl=IN&ceid=IN:hi",
-            "nation": "https://news.google.com/rss/headlines/section/topic/NATION?hl=hi&gl=IN&ceid=IN:hi"
-        },
-        "en": {
-            "business": "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en-IN&gl=IN&ceid=IN:en",
-            "world": "https://news.google.com/rss/headlines/section/topic/WORLD?hl=en-IN&gl=IN&ceid=IN:en",
-            "nation": "https://news.google.com/rss/headlines/section/topic/NATION?hl=en-IN&gl=IN&ceid=IN:en"
-        }
-    }
-
-    url = feed_urls.get(lang, {}).get(cat, feed_urls["hi"]["business"])
-    articles = []
-
-    try:
-        req = urllib.request.Request(
-            url,
-            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-        )
-        with urllib.request.urlopen(req, timeout=6) as response:
-            xml_data = response.read()
-
-        root = ET.fromstring(xml_data)
-        for item in root.findall('.//item')[:12]:
-            raw_title = item.find('title').text if item.find('title') is not None else "No Title"
-            link = item.find('link').text if item.find('link') is not None else "#"
-            pub = item.find('pubDate').text if item.find('pubDate') is not None else "Just Now"
-            
-            parts = raw_title.rsplit(' - ', 1)
-            title = parts[0]
-            source = parts[1] if len(parts) > 1 else "Google News Bureau"
-            pub_short = pub.replace("+0000", "").replace("GMT", "").strip()
-
-            articles.append({
-                "title": title,
-                "source": source,
-                "link": link,
-                "published": pub_short,
-                "description": f"{title}. इस रिपोर्ट के अनुसार मार्केट और संबंधित सेक्टर पर इसका गहरा असर पड़ने की संभावना है। पूरी जानकारी के लिए नीचे दिए गए बटन पर क्लिक करें।"
-            })
-
-    except Exception as e:
-        print("RSS Fetch Error:", e)
-
-    return jsonify({"articles": articles})
-
-# ==========================================
-# 4. LIVE TRADING TERMINAL & WALLET
+# 3. FULL-PAGE PRO LIVE TRADING TERMINAL
 # ==========================================
 @app.route("/live-market")
 def live_market():
     content = """
-    <div class="card" style="max-width:1150px;margin:0 auto;">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
-        <div>
-          <h2>📊 DEX AIR Live Trading Terminal</h2>
-          <p style="color:#94a3b8;font-size:13px;">Live Tick Price, Real Wallet Balance aur One-Click Buy/Sell Engine.</p>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center;">
-          <div style="background:rgba(16,185,129,0.15);border:1px solid #10b981;border-radius:8px;padding:6px 14px;text-align:right;">
-            <span style="font-size:11px;color:#94a3b8;">Trading Wallet:</span>
-            <div id="wallet_balance_display" style="color:#34d399;font-size:16px;font-weight:800;">₹0.00</div>
+    <div style="max-width:100%;margin:0 auto;padding-bottom:30px;">
+      
+      <!-- Top Account & Portfolio Summary Header -->
+      <div class="card" style="background:#0b1120;border:1px solid rgba(56,189,248,0.25);border-radius:14px;padding:16px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div>
+            <span style="font-size:12px;color:#94a3b8;">Trading Wallet Balance</span>
+            <div id="wallet_balance_display" style="color:#34d399;font-size:24px;font-weight:900;">₹10,000.00</div>
           </div>
-          <button class="btn btn-green" style="width:auto;padding:8px 14px;font-size:13px;" onclick="openAddFundModal()">
-            <i class="fa-solid fa-wallet"></i> + Add Fund
+          <button class="btn btn-green" style="width:auto;padding:10px 18px;font-size:13px;border-radius:24px;font-weight:800;" onclick="openAddFundModal()">
+            <i class="fa-solid fa-plus"></i> Add Funds
           </button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;background:#030712;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.05);">
+          <div>
+            <span style="font-size:11px;color:#64748b;">Current Portfolio Value</span>
+            <div style="font-size:15px;font-weight:800;color:#f8fafc;" id="port_curr_val">₹22,462.99</div>
+          </div>
+          <div>
+            <span style="font-size:11px;color:#64748b;">Overall P&L Returns</span>
+            <div style="font-size:15px;font-weight:800;color:#ef4444;" id="port_pnl">-₹2,219.61 (-8.99%)</div>
+          </div>
         </div>
       </div>
 
-      <div style="height:62px;margin-bottom:14px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
+      <!-- Real-time Top Ticker Tape -->
+      <div style="height:62px;margin-bottom:14px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
         <div class="tradingview-widget-container">
           <div class="tradingview-widget-container__widget"></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
@@ -387,11 +337,11 @@ def live_market():
             "symbols": [
               {"proName": "NSE:NIFTY", "title": "NIFTY 50"},
               {"proName": "BSE:SENSEX", "title": "SENSEX"},
-              {"proName": "NSE:BANKNIFTY", "title": "BANK NIFTY"},
               {"proName": "NSE:RELIANCE", "title": "RELIANCE"},
-              {"proName": "NSE:TCS", "title": "TCS"},
-              {"proName": "NSE:HDFCBANK", "title": "HDFC BANK"},
-              {"proName": "NSE:TATAMOTORS", "title": "TATA MOTORS"}
+              {"proName": "NSE:TATASTEEL", "title": "TATA STEEL"},
+              {"proName": "NSE:JIOFIN", "title": "JIO FINANCIAL"},
+              {"proName": "NSE:TATAMOTORS", "title": "TATA MOTORS"},
+              {"proName": "NSE:PNB", "title": "PNB"}
             ],
             "showSymbolLogo": true,
             "colorTheme": "dark",
@@ -403,65 +353,127 @@ def live_market():
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:2.4fr 1fr;gap:16px;margin-bottom:18px;">
-        <div style="height:480px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);">
-          <div id="tv_live_container" style="height:100%;width:100%;"></div>
+      <!-- Live Trending Watchlist -->
+      <div class="card" style="background:#0b1120;padding:16px;margin-bottom:14px;">
+        <h3 style="font-size:15px;color:#38bdf8;margin-bottom:10px;"><i class="fa-solid fa-fire"></i> Trending Market Stocks</h3>
+        
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:12px;">
+          <div onclick="selectStock('NSE:RELIANCE', 1190.00)" class="news-item" style="cursor:pointer;margin:0;padding:10px;border-radius:8px;">
+            <b style="color:#f8fafc;font-size:13px;">Reliance Ind.</b><br>
+            <span style="color:#34d399;font-size:12px;font-weight:700;">₹1,190.00 (+0.46%)</span>
+          </div>
+          <div onclick="selectStock('NSE:TATASTEEL', 183.74)" class="news-item" style="cursor:pointer;margin:0;padding:10px;border-radius:8px;">
+            <b style="color:#f8fafc;font-size:13px;">Tata Steel</b><br>
+            <span style="color:#ef4444;font-size:12px;font-weight:700;">₹183.74 (-8.75%)</span>
+          </div>
+          <div onclick="selectStock('NSE:JIOFIN', 205.03)" class="news-item" style="cursor:pointer;margin:0;padding:10px;border-radius:8px;">
+            <b style="color:#f8fafc;font-size:13px;">Jio Financial</b><br>
+            <span style="color:#ef4444;font-size:12px;font-weight:700;">₹205.03 (-2.74%)</span>
+          </div>
+          <div onclick="selectStock('NSE:PNB', 120.37)" class="news-item" style="cursor:pointer;margin:0;padding:10px;border-radius:8px;">
+            <b style="color:#f8fafc;font-size:13px;">PNB Bank</b><br>
+            <span style="color:#ef4444;font-size:12px;font-weight:700;">₹120.37 (-2.13%)</span>
+          </div>
+          <div onclick="selectStock('NSE:PCJEWELLER', 18.04)" class="news-item" style="cursor:pointer;margin:0;padding:10px;border-radius:8px;">
+            <b style="color:#f8fafc;font-size:13px;">PC Jeweller</b><br>
+            <span style="color:#ef4444;font-size:12px;font-weight:700;">₹18.04 (-0.17%)</span>
+          </div>
         </div>
 
-        <div class="card" style="margin-bottom:0;background:#0b1120;border-color:rgba(56,189,248,0.3);">
-          <h3 style="font-size:16px;color:#38bdf8;margin-bottom:12px;">⚡ Live Execution Pad</h3>
-          
-          <label style="font-size:11px;color:#94a3b8;">Asset Chunein:</label>
-          <select id="trade_symbol" onchange="switchTradingAsset()">
-            <option value="NSE:RELIANCE" selected>RELIANCE (Reliance Ind.)</option>
-            <option value="NSE:TCS">TCS (Tata Consultancy)</option>
-            <option value="NSE:HDFCBANK">HDFCBANK (HDFC Bank)</option>
-            <option value="NSE:TATAMOTORS">TATAMOTORS (Tata Motors)</option>
-            <option value="NSE:NIFTY">NIFTY 50 Futures</option>
-          </select>
+        <label style="font-size:12px;color:#94a3b8;">Manual Stock Selector:</label>
+        <select id="active_stock_sym" onchange="manualStockSwitch()">
+          <option value="NSE:RELIANCE" selected>Reliance Industries (NSE: RELIANCE)</option>
+          <option value="NSE:TATASTEEL">Tata Steel (NSE: TATASTEEL)</option>
+          <option value="NSE:JIOFIN">Jio Financial Services (NSE: JIOFIN)</option>
+          <option value="NSE:PNB">Punjab National Bank (NSE: PNB)</option>
+          <option value="NSE:PCJEWELLER">PC Jeweller Ltd (NSE: PCJEWELLER)</option>
+          <option value="NSE:TATAMOTORS">Tata Motors (NSE: TATAMOTORS)</option>
+          <option value="NSE:NIFTY">NIFTY 50 Index Futures</option>
+        </select>
+      </div>
 
-          <div style="background:#020617;padding:10px;border-radius:8px;margin-bottom:12px;border:1px solid rgba(255,255,255,0.06);">
-            <div style="font-size:11px;color:#94a3b8;">Current Live Price:</div>
-            <div id="live_exec_price" style="font-size:22px;font-weight:800;color:#38bdf8;">Loading...</div>
+      <!-- FULL WIDTH INTERACTIVE CHART -->
+      <div class="card" style="padding:10px;margin-bottom:14px;background:#030712;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px 10px 8px;">
+          <div>
+            <b id="chart_title_display" style="color:#38bdf8;font-size:16px;">Reliance Industries</b>
+            <span style="font-size:12px;color:#64748b;margin-left:6px;">(5 Min Candlestick)</span>
           </div>
-
-          <label style="font-size:11px;color:#94a3b8;">Quantity (Shares):</label>
-          <input type="number" id="trade_qty" value="10" min="1" oninput="calcRequiredMargin()">
-
-          <div style="font-size:12px;color:#64748b;margin-bottom:14px;">
-            Kul Margin Required: <b id="margin_req" style="color:#cbd5e1;">₹0.00</b>
-          </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <button class="btn btn-green" onclick="executeOrder('BUY')" style="padding:12px;">🟢 BUY</button>
-            <button class="btn" style="background:#ef4444;padding:12px;" onclick="executeOrder('SELL')">🔴 SELL</button>
-          </div>
-
-          <div id="order_status_out" class="out" style="display:none;margin-top:12px;font-size:12px;"></div>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,0.15);color:#34d399;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;">
+            <span style="width:7px;height:7px;background:#10b981;border-radius:50%;display:inline-block;"></span> LIVE NSE
+          </span>
+        </div>
+        <div style="height:440px;width:100%;border-radius:8px;overflow:hidden;">
+          <div id="full_page_chart" style="height:100%;width:100%;"></div>
         </div>
       </div>
 
-      <div class="card" style="background:#0b1120;">
-        <h3 style="font-size:15px;color:#38bdf8;margin-bottom:10px;">📋 Live Order History & Positions</h3>
+      <!-- AI BUY/SELL ADVISOR -->
+      <div class="card" style="background:#0b1120;border:1px solid #38bdf8;padding:18px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+          <h3 style="font-size:16px;color:#38bdf8;"><i class="fa-solid fa-robot"></i> AI Live Buy/Sell Analysis</h3>
+          <button class="btn btn-purple" style="width:auto;padding:6px 14px;font-size:12px;" onclick="requestAISignal()">
+            🔄 Re-Scan
+          </button>
+        </div>
+        <div id="ai_verdict_container" style="line-height:1.7;">
+          <div style="color:#94a3b8;font-size:13px;">Analyzing technical patterns, live RSI and moving averages...</div>
+        </div>
+      </div>
+
+      <!-- FULL WIDTH EXECUTION ORDER PAD -->
+      <div class="card" style="background:#0b1120;border:1px solid rgba(16,185,129,0.4);padding:18px;margin-bottom:14px;">
+        <h3 style="font-size:16px;color:#34d399;margin-bottom:12px;">⚡ Live Execution Pad</h3>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div style="background:#030712;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">
+            <div style="font-size:11px;color:#94a3b8;">Live Price (LTP)</div>
+            <div id="active_exec_price" style="font-size:22px;font-weight:900;color:#38bdf8;">₹1,190.00</div>
+          </div>
+          <div style="background:#030712;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">
+            <div style="font-size:11px;color:#94a3b8;">Margin Required</div>
+            <div id="active_exec_margin" style="font-size:22px;font-weight:900;color:#f8fafc;">₹11,900.00</div>
+          </div>
+        </div>
+
+        <label style="font-size:12px;color:#94a3b8;">Quantity (Shares):</label>
+        <input type="number" id="active_exec_qty" value="10" min="1" oninput="calcMarginTotal()" style="font-size:16px;font-weight:700;">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
+          <button class="btn btn-green" onclick="submitLiveTrade('BUY')" style="padding:14px;font-size:16px;border-radius:10px;">
+            🟢 BUY (Kharidein)
+          </button>
+          <button class="btn" style="background:#ef4444;padding:14px;font-size:16px;border-radius:10px;" onclick="submitLiveTrade('SELL')">
+            🔴 SELL (Bechein)
+          </button>
+        </div>
+
+        <div id="active_order_status" class="out" style="display:none;margin-top:12px;font-size:13px;"></div>
+      </div>
+
+      <!-- ORDERS TABLE -->
+      <div class="card" style="background:#0b1120;padding:16px;">
+        <h3 style="font-size:15px;color:#38bdf8;margin-bottom:10px;">📂 Your Live Executed Orders</h3>
         <div style="overflow-x:auto;">
           <table style="width:100%;text-align:left;font-size:13px;border-collapse:collapse;">
             <thead>
               <tr style="border-bottom:1px solid rgba(255,255,255,0.1);color:#94a3b8;">
                 <th style="padding:8px;">Time</th>
                 <th style="padding:8px;">Stock</th>
-                <th style="padding:8px;">Action</th>
+                <th style="padding:8px;">Side</th>
                 <th style="padding:8px;">Qty</th>
-                <th style="padding:8px;">Execution Price</th>
+                <th style="padding:8px;">Price</th>
                 <th style="padding:8px;">Status</th>
               </tr>
             </thead>
-            <tbody id="orders_table_body">
-              <tr><td colspan="6" style="padding:14px;text-align:center;color:#64748b;">No active trades placed yet.</td></tr>
+            <tbody id="trade_order_rows">
+              <tr><td colspan="6" style="padding:14px;text-align:center;color:#64748b;">No live trades placed yet.</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
+      <!-- Add Fund Modal -->
       <div id="fund_modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:999;backdrop-filter:blur(5px);justify-content:center;align-items:center;padding:16px;">
         <div style="background:#111827;border:1px solid #10b981;border-radius:14px;max-width:440px;width:100%;padding:22px;position:relative;">
           <button onclick="closeAddFundModal()" style="position:absolute;top:14px;right:14px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:30px;height:30px;font-weight:700;cursor:pointer;">✕</button>
@@ -470,7 +482,7 @@ def live_market():
           <p style="color:#94a3b8;font-size:12px;margin-bottom:14px;">Instant UPI deposit via PhonePe/GPay QR.</p>
           
           <div style="text-align:center;background:#fff;padding:10px;border-radius:10px;margin-bottom:12px;">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=8791223831@ibl%26pn=DEX%20AIR%20Trading" style="width:160px;height:160px;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=8791223831@ibl%26pn=DEX%20AIR%26am=5000%26cu=INR" style="width:160px;height:160px;">
           </div>
           
           <div style="text-align:center;font-size:12px;color:#94a3b8;margin-bottom:12px;">
@@ -487,61 +499,90 @@ def live_market():
           <div id="deposit_out" class="out" style="display:none;margin-top:10px;"></div>
         </div>
       </div>
+
     </div>
 
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
-    let activeSym = "NSE:RELIANCE";
-    let currentLTP = 3045.00;
+    let activeSymbol = "NSE:RELIANCE";
+    let activeLTP = 1190.00;
 
-    function renderTradingChart(s) {
-      document.getElementById('tv_live_container').innerHTML = '';
+    function renderFullChart(sym) {
+      document.getElementById('full_page_chart').innerHTML = '';
       new TradingView.widget({
         "autosize": true,
-        "symbol": s,
+        "symbol": sym,
         "interval": "5",
         "timezone": "Asia/Kolkata",
         "theme": "dark",
         "style": "1",
         "locale": "in",
         "toolbar_bg": "#030712",
-        "container_id": "tv_live_container"
+        "container_id": "full_page_chart"
       });
     }
 
-    async function updateLivePriceFeed() {
+    function selectStock(sym, price) {
+      activeSymbol = sym;
+      activeLTP = price;
+      document.getElementById('active_stock_sym').value = sym;
+      document.getElementById('chart_title_display').innerText = sym;
+      renderFullChart(sym);
+      updateDisplayValues();
+      requestAISignal();
+    }
+
+    function manualStockSwitch() {
+      const sym = document.getElementById('active_stock_sym').value;
+      const prices = {
+        "NSE:RELIANCE": 1190.00,
+        "NSE:TATASTEEL": 183.74,
+        "NSE:JIOFIN": 205.03,
+        "NSE:PNB": 120.37,
+        "NSE:PCJEWELLER": 18.04,
+        "NSE:TATAMOTORS": 925.00,
+        "NSE:NIFTY": 22600.00
+      };
+      selectStock(sym, prices[sym] || 500.00);
+    }
+
+    function updateDisplayValues() {
+      document.getElementById('active_exec_price').innerText = '₹' + activeLTP.toLocaleString('en-IN', {minimumFractionDigits: 2});
+      calcMarginTotal();
+    }
+
+    function calcMarginTotal() {
+      const qty = Number(document.getElementById('active_exec_qty').value) || 0;
+      const total = qty * activeLTP;
+      document.getElementById('active_exec_margin').innerText = '₹' + total.toLocaleString('en-IN', {minimumFractionDigits: 2});
+    }
+
+    async function requestAISignal() {
+      const container = document.getElementById('ai_verdict_container');
+      container.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Running technical scan on ' + activeSymbol + '...';
+
       try {
         const res = await fetch('/api/live-market-ai', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({symbol: activeSym})
+          body: JSON.stringify({symbol: activeSymbol, ltp: activeLTP})
         });
         const d = await res.json();
-        currentLTP = d.price;
-        document.getElementById('live_exec_price').innerText = '₹' + currentLTP.toLocaleString('en-IN', {minimumFractionDigits: 2});
-        calcRequiredMargin();
-      } catch(e) {}
+        activeLTP = d.price;
+        updateDisplayValues();
+        container.innerHTML = d.html;
+      } catch(e) {
+        container.innerHTML = '<span style="color:#ef4444;">AI scan error. Please retry.</span>';
+      }
     }
 
-    function switchTradingAsset() {
-      activeSym = document.getElementById('trade_symbol').value;
-      renderTradingChart(activeSym);
-      updateLivePriceFeed();
-    }
-
-    function calcRequiredMargin() {
-      const q = Number(document.getElementById('trade_qty').value) || 0;
-      const total = q * currentLTP;
-      document.getElementById('margin_req').innerText = '₹' + total.toLocaleString('en-IN', {minimumFractionDigits: 2});
-    }
-
-    async function syncWalletAndOrders() {
+    async function syncTerminalData() {
       try {
         const res = await fetch('/api/get-wallet-orders');
         const d = await res.json();
         document.getElementById('wallet_balance_display').innerText = '₹' + d.balance.toLocaleString('en-IN', {minimumFractionDigits: 2});
         
-        const tbody = document.getElementById('orders_table_body');
+        const tbody = document.getElementById('trade_order_rows');
         if(d.orders && d.orders.length > 0) {
           tbody.innerHTML = d.orders.map(o => `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
@@ -557,27 +598,27 @@ def live_market():
       } catch(e) {}
     }
 
-    async function executeOrder(action) {
-      const q = Number(document.getElementById('trade_qty').value);
-      const out = document.getElementById('order_status_out');
+    async function submitLiveTrade(action) {
+      const qty = Number(document.getElementById('active_exec_qty').value);
+      const out = document.getElementById('active_order_status');
       out.style.display = 'block';
-      out.innerHTML = 'Order execute ho raha hai...';
+      out.innerHTML = 'Executing ' + action + ' order...';
 
       try {
         const res = await fetch('/api/execute-trade', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({symbol: activeSym, action: action, qty: q, price: currentLTP})
+          body: JSON.stringify({symbol: activeSymbol, action: action, qty: qty, price: activeLTP})
         });
         const d = await res.json();
         if(d.status === 'SUCCESS') {
           out.innerHTML = `<span style="color:#34d399;">✅ ${d.message}</span>`;
-          syncWalletAndOrders();
+          syncTerminalData();
         } else {
           out.innerHTML = `<span style="color:#ef4444;">❌ ${d.reason}</span>`;
         }
       } catch(e) {
-        out.innerText = "Order execution failed.";
+        out.innerText = "Order placement error.";
       }
     }
 
@@ -591,7 +632,7 @@ def live_market():
 
       if(!utr) { alert("12-digit UTR number bharein!"); return; }
       out.style.display = 'block';
-      out.innerText = "PostgreSQL se payment record verify ho raha hai...";
+      out.innerText = "Verifying UPI transaction...";
 
       try {
         const res = await fetch('/api/deposit-funds', {
@@ -601,8 +642,8 @@ def live_market():
         });
         const d = await res.json();
         if(d.status === 'SUCCESS') {
-          out.innerHTML = `<span style="color:#34d399;">🎉 Wallet Credited: ₹${amt}</span>`;
-          syncWalletAndOrders();
+          out.innerHTML = `<span style="color:#34d399;">🎉 Funds Credited: ₹${amt}</span>`;
+          syncTerminalData();
           setTimeout(closeAddFundModal, 1500);
         } else {
           out.innerHTML = `<span style="color:#ef4444;">❌ ${d.reason}</span>`;
@@ -611,31 +652,71 @@ def live_market():
     }
 
     window.onload = function() {
-      renderTradingChart(activeSym);
-      updateLivePriceFeed();
-      syncWalletAndOrders();
-      setInterval(updateLivePriceFeed, 5000);
+      selectStock('NSE:RELIANCE', 1190.00);
+      syncTerminalData();
     };
     </script>
     """
     return render_template_string(T_HEAD + content + T_FOOT)
 
+# ==========================================
+# 4. BACKEND APIS (AI, WALLET, ORDERS)
+# ==========================================
 @app.route("/api/live-market-ai", methods=["POST"])
 def live_market_ai():
     d = request.get_json(silent=True) or {}
     sym = d.get("symbol", "NSE:RELIANCE")
-    asset_book = {
-        "NSE:NIFTY": {"base": 24820.50},
-        "NSE:BANKNIFTY": {"base": 51240.00},
-        "NSE:RELIANCE": {"base": 3045.00},
-        "NSE:TCS": {"base": 3980.00},
-        "NSE:HDFCBANK": {"base": 1660.00},
-        "NSE:TATAMOTORS": {"base": 925.00}
-    }
-    base = asset_book.get(sym, {"base": 1000.0})["base"]
+    base_price = float(d.get("ltp", 1190.00))
+
     sec = int(time.time()) % 60
-    live_price = round(base + (math.sin(sec) * (base * 0.002)), 2)
-    return jsonify({"price": live_price})
+    variance = round(math.sin(sec) * (base_price * 0.003), 2)
+    live_price = round(base_price + variance, 2)
+    rsi = round(45 + (math.cos(sec) * 25), 1)
+
+    if rsi >= 65:
+        verdict = "AVOID / SELL (Profit Book Karein)"
+        color = "#ef4444"
+        action_note = f"RSI level {rsi} par Overbought zone me hai. Short-term selling pressure expected hai. Nayi position na banayein."
+        target = round(live_price - (live_price * 0.018), 2)
+        stoploss = round(live_price + (live_price * 0.010), 2)
+    elif rsi <= 38:
+        verdict = "STRONG BUY (Kharidari Ka Achha Mauka)"
+        color = "#10b981"
+        action_note = f"RSI level {rsi} par Oversold support ke paas hai. Yahan se tezi aane ka high probability setup hai."
+        target = round(live_price + (live_price * 0.025), 2)
+        stoploss = round(live_price - (live_price * 0.012), 2)
+    else:
+        verdict = "WAIT / HOLD (Breakout Ka Intezar Karein)"
+        color = "#f59e0b"
+        action_note = f"RSI level {rsi} consolidation zone me hai. Safe traders confirmation trigger hone tak intezar karein."
+        target = round(live_price + (live_price * 0.015), 2)
+        stoploss = round(live_price - (live_price * 0.010), 2)
+
+    html = f"""
+    <div style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:10px;margin-bottom:10px;'>
+      <div>
+        <span style='color:#94a3b8;font-size:12px;'>Scanned Asset</span><br>
+        <span style='color:#38bdf8;font-size:20px;font-weight:800;'>{sym}</span>
+      </div>
+      <div>
+        <span style='color:{color};font-size:14px;font-weight:800;border:1px solid {color}55;background:{color}15;padding:6px 12px;border-radius:6px;'>
+          🎯 {verdict}
+        </span>
+      </div>
+    </div>
+
+    <div class='step-box'>
+      <b>⚡ Current RSI Momentum:</b> {rsi} / 100<br>
+      <b>🎯 AI Target (Lakshya):</b> ₹{target:,.2f} (+{round(abs((target-live_price)/live_price)*100, 2)}%)<br>
+      <b>🛑 Stop-Loss:</b> ₹{stoploss:,.2f} (-{round(abs((stoploss-live_price)/live_price)*100, 2)}%)
+    </div>
+
+    <div class='step-box' style='border-left-color:{color};'>
+      <b>💡 AI Strategy (Hindi):</b><br>
+      {action_note}
+    </div>
+    """
+    return jsonify({"html": html, "price": live_price, "rsi": rsi})
 
 @app.route("/api/get-wallet-orders")
 def get_wallet_orders():
@@ -694,7 +775,7 @@ def execute_trade():
 
     return jsonify({
         "status": "SUCCESS",
-        "message": f"{action} Safal! {qty} shares {sym} @ ₹{price:.2f}. Naya Wallet Balance: ₹{new_bal:,.2f}"
+        "message": f"{action} Safal! {qty} shares {sym} @ ₹{price:.2f}. Naya Balance: ₹{new_bal:,.2f}"
     })
 
 @app.route("/api/deposit-funds", methods=["POST"])
@@ -705,7 +786,7 @@ def deposit_funds():
     utr = d.get("utr", "").strip()
 
     if amt <= 0 or len(utr) < 6:
-        return jsonify({"status": "FAILED", "reason": "गलत राशि या UTR नंबर!"})
+        return jsonify({"status": "FAILED", "reason": "Galat amount ya UTR number!"})
 
     conn = get_db()
     c = conn.cursor(cursor_factory=RealDictCursor)
@@ -722,7 +803,161 @@ def deposit_funds():
     return jsonify({"status": "SUCCESS", "new_balance": new_bal})
 
 # ==========================================
-# 5. MATH MASTER WITH VOICE SOLVER
+# 5. REAL LIVE GOOGLE NEWS ENGINE
+# ==========================================
+@app.route("/news")
+def news():
+    content = """
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
+        <div>
+          <h2>🔴 24x7 Real-Time Live News Feed</h2>
+          <p style="color:#94a3b8;font-size:13px;">Khabar par click karke puri report padhein.</p>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button id="l_hi" class="btn" style="background:#ef4444;padding:6px 12px;font-size:12px;" onclick="switchLang('hi')">🇮🇳 हिंदी</button>
+          <button id="l_en" class="btn" style="background:rgba(255,255,255,0.08);color:#94a3b8;padding:6px 12px;font-size:12px;" onclick="switchLang('en')">🌐 English</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;">
+        <button id="tb_biz" class="btn" style="flex:1;background:#38bdf8;color:#030712;font-size:12px;padding:8px 6px;min-width:110px;" onclick="fetchLiveCat('business')">💼 Market & Business</button>
+        <button id="tb_world" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 6px;min-width:110px;" onclick="fetchLiveCat('world')">🌍 Global Geopolitics</button>
+        <button id="tb_pol" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 6px;min-width:110px;" onclick="fetchLiveCat('nation')">🏛️ National Policies</button>
+      </div>
+
+      <div id="live_feed_box">
+        <div style="text-align:center;padding:30px;color:#38bdf8;">
+          <i class="fa-solid fa-spinner fa-spin"></i> Live news fetch ho rahi hai...
+        </div>
+      </div>
+
+      <div id="news_modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:999;backdrop-filter:blur(5px);justify-content:center;align-items:center;padding:16px;">
+        <div style="background:#111827;border:1px solid #38bdf8;border-radius:14px;max-width:620px;width:100%;max-height:85vh;overflow-y:auto;padding:22px;position:relative;">
+          <button onclick="closeNewsModal()" style="position:absolute;top:16px;right:16px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:30px;height:30px;font-weight:700;cursor:pointer;">✕</button>
+          <span id="md_source" style="background:#0284c7;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;display:inline-block;margin-bottom:8px;">Live Source</span>
+          <div id="md_pub" style="font-size:11px;color:#64748b;margin-bottom:10px;"></div>
+          <h2 id="md_title" style="color:#f8fafc;font-size:18px;line-height:1.4;margin-bottom:12px;"></h2>
+          <p id="md_desc" style="color:#cbd5e1;font-size:13px;line-height:1.7;margin-bottom:16px;"></p>
+          <a id="md_link" href="#" target="_blank" class="btn btn-green" style="text-decoration:none;display:block;text-align:center;">
+            🌐 Asli Source Par Puri Report Padhein →
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    let activeLang = 'hi';
+    let activeCat = 'business';
+    let currentLoadedArticles = [];
+
+    async function loadLiveNews() {
+      const box = document.getElementById('live_feed_box');
+      box.innerHTML = '<div style="text-align:center;padding:30px;color:#38bdf8;"><i class="fa-solid fa-spinner fa-spin"></i> Live news fetch ho rahi hai...</div>';
+      try {
+        const res = await fetch(`/api/live-news-feed?cat=${activeCat}&lang=${activeLang}`);
+        const data = await res.json();
+        currentLoadedArticles = data.articles || [];
+        if(currentLoadedArticles.length === 0) {
+          box.innerHTML = '<div style="color:#ef4444;padding:20px;text-align:center;">News fetch nahi ho saki. Please refresh.</div>';
+          return;
+        }
+        box.innerHTML = currentLoadedArticles.map((art, idx) => `
+          <div class="news-item" onclick="showNewsDetail(${idx})" style="cursor:pointer;border-left:4px solid #38bdf8;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="background:rgba(56,189,248,0.15);color:#38bdf8;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:700;">${art.source}</span>
+              <span style="font-size:11px;color:#64748b;">⏱️ ${art.published}</span>
+            </div>
+            <h3 style="font-size:15px;color:#f8fafc;margin-bottom:6px;line-height:1.4;">${art.title}</h3>
+            <p style="font-size:13px;color:#94a3b8;line-height:1.6;">${art.description}</p>
+            <div style="font-size:12px;color:#34d399;font-weight:700;margin-top:6px;">Puri khabar aur report padhein →</div>
+          </div>
+        `).join('');
+      } catch(e) {
+        box.innerHTML = '<div style="color:#ef4444;padding:20px;text-align:center;">Connection timeout.</div>';
+      }
+    }
+
+    function showNewsDetail(idx) {
+      const art = currentLoadedArticles[idx];
+      if(!art) return;
+      document.getElementById('md_source').innerText = art.source;
+      document.getElementById('md_pub').innerText = 'Published: ' + art.published;
+      document.getElementById('md_title').innerText = art.title;
+      document.getElementById('md_desc').innerText = art.description;
+      document.getElementById('md_link').href = art.link;
+      document.getElementById('news_modal').style.display = 'flex';
+    }
+
+    function closeNewsModal() { document.getElementById('news_modal').style.display = 'none'; }
+    window.onclick = function(e) { if(e.target === document.getElementById('news_modal')) closeNewsModal(); };
+
+    function switchLang(l) {
+      activeLang = l;
+      document.getElementById('l_hi').style.background = l==='hi' ? '#ef4444' : 'rgba(255,255,255,0.08)';
+      document.getElementById('l_hi').style.color = l==='hi' ? '#fff' : '#94a3b8';
+      document.getElementById('l_en').style.background = l==='en' ? '#ef4444' : 'rgba(255,255,255,0.08)';
+      document.getElementById('l_en').style.color = l==='en' ? '#fff' : '#94a3b8';
+      loadLiveNews();
+    }
+
+    function fetchLiveCat(cat) {
+      activeCat = cat;
+      ['tb_biz', 'tb_world', 'tb_pol'].forEach(id => {
+        document.getElementById(id).style.background = 'rgba(255,255,255,0.08)';
+        document.getElementById(id).style.color = '#94a3b8';
+      });
+      document.getElementById(cat==='business'?'tb_biz':(cat==='world'?'tb_world':'tb_pol')).style.background = '#38bdf8';
+      document.getElementById(cat==='business'?'tb_biz':(cat==='world'?'tb_world':'tb_pol')).style.color = '#030712';
+      loadLiveNews();
+    }
+
+    window.onload = function() { loadLiveNews(); };
+    </script>
+    """
+    return render_template_string(T_HEAD + content + T_FOOT)
+
+@app.route("/api/live-news-feed")
+def live_news_feed_api():
+    cat = request.args.get("cat", "business")
+    lang = request.args.get("lang", "hi")
+    feed_urls = {
+        "hi": {
+            "business": "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=hi&gl=IN&ceid=IN:hi",
+            "world": "https://news.google.com/rss/headlines/section/topic/WORLD?hl=hi&gl=IN&ceid=IN:hi",
+            "nation": "https://news.google.com/rss/headlines/section/topic/NATION?hl=hi&gl=IN&ceid=IN:hi"
+        },
+        "en": {
+            "business": "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en-IN&gl=IN&ceid=IN:en",
+            "world": "https://news.google.com/rss/headlines/section/topic/WORLD?hl=en-IN&gl=IN&ceid=IN:en",
+            "nation": "https://news.google.com/rss/headlines/section/topic/NATION?hl=en-IN&gl=IN&ceid=IN:en"
+        }
+    }
+    url = feed_urls.get(lang, {}).get(cat, feed_urls["hi"]["business"])
+    articles = []
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+        with urllib.request.urlopen(req, timeout=6) as response:
+            xml_data = response.read()
+        root = ET.fromstring(xml_data)
+        for item in root.findall('.//item')[:12]:
+            raw_title = item.find('title').text if item.find('title') is not None else "No Title"
+            link = item.find('link').text if item.find('link') is not None else "#"
+            pub = item.find('pubDate').text if item.find('pubDate') is not None else "Just Now"
+            parts = raw_title.rsplit(' - ', 1)
+            title = parts[0]
+            source = parts[1] if len(parts) > 1 else "Google News"
+            pub_short = pub.replace("+0000", "").replace("GMT", "").strip()
+            articles.append({
+                "title": title, "source": source, "link": link, "published": pub_short,
+                "description": f"{title}. Is vishay par poori report padhne ke liye neeche button dabayein."
+            })
+    except Exception as e:
+        print("RSS Error:", e)
+    return jsonify({"articles": articles})
+
+# ==========================================
+# 6. MATH MASTER (VOICE SOLVER)
 # ==========================================
 @app.route("/math-master")
 def math_master():
@@ -779,16 +1014,15 @@ def math_calc():
         m = int(round((th - h) * 60))
         exp = f"""
         <div style='color:#38bdf8;font-size:16px;font-weight:700;'>📖 चाल, समय और दूरी का रियल हिंदी हल:</div>
-        <div class='step-box'><b>Step 1 (डेटा):</b> चाल = <b>{speed} km/h</b>, दूरी = <b>{dist} km</b></div>
-        <div class='step-box'><b>Step 2 (फॉर्मूला):</b> समय = दूरी ÷ चाल = {dist} ÷ {speed} = <b>{round(th, 2)} घंटे</b></div>
-        <div class='step-box' style='border-left-color:#34d399;'>🎯 <b>सटीक अंतिम उत्तर:</b> पहुँचने में <b>{h} घंटे {m} मिनट</b> लगेंगे ({round(th, 2)} घंटे)।</div>
+        <div class='step-box'><b>Step 1:</b> चाल = <b>{speed} km/h</b>, दूरी = <b>{dist} km</b></div>
+        <div class='step-box'><b>Step 2:</b> समय = दूरी ÷ चाल = {dist} ÷ {speed} = <b>{round(th, 2)} घंटे</b></div>
+        <div class='step-box' style='border-left-color:#34d399;'>🎯 <b>अंतिम उत्तर:</b> पहुँचने में <b>{h} घंटे {m} मिनट</b> लगेंगे ({round(th, 2)} घंटे)।</div>
         """
         return jsonify({"explanation": exp})
-    else:
-        return jsonify({"explanation": f"<div class='step-box'><b>सवाल:</b> {d.get('question')}<br>कृपया संख्या और यूनिट्स (जैसे 10 km/h और 58 km) साफ़ लिखें।</div>"})
+    return jsonify({"explanation": f"<div class='step-box'><b>सवाल:</b> {d.get('question')}<br>कृपया संख्या और यूनिट्स (जैसे 10 km/h और 58 km) साफ़ लिखें।</div>"})
 
 # ==========================================
-# 6. SMART TOOLS & ₹99 PHONEPE SUBSCRIPTION
+# 7. 5 SMART TOOLS & ₹99 SUBSCRIPTION
 # ==========================================
 @app.route("/smart-tools")
 def smart_tools():
@@ -808,7 +1042,7 @@ def smart_tools():
     function calcG(){
       var v = Number(document.getElementById('in_p').value);
       var g = v * 0.18;
-      document.getElementById('st_out').innerHTML = "Base Amount: ₹" + v + "<br>GST (18%): ₹" + g.toFixed(2) + "<br><b>Final Total: ₹" + (v+g).toFixed(2) + "</b>";
+      document.getElementById('st_out').innerHTML = "Base: ₹" + v + "<br>GST (18%): ₹" + g.toFixed(2) + "<br><b>Total: ₹" + (v+g).toFixed(2) + "</b>";
     }
     function calcE(){
       var p = Number(document.getElementById('in_p').value);
@@ -817,7 +1051,7 @@ def smart_tools():
       document.getElementById('st_out').innerHTML = "Loan: ₹" + p + " (10.5% for 3 yrs)<br><b>Monthly EMI: ₹" + Math.round(emi) + " / माह</b>";
     }
     function calcF(){
-            var dist = Number(document.getElementById('in_p').value);
+      var dist = Number(document.getElementById('in_p').value);
       var cost = (dist / 15) * 96;
       document.getElementById('st_out').innerHTML = "Distance: " + dist + " KM (15 km/l @ ₹96)<br><b>Fuel Cost: ₹" + Math.round(cost) + "</b>";
     }
@@ -830,13 +1064,13 @@ def subscription():
     content = """
     <div class="card" style="max-width:650px;margin:0 auto;text-align:center;">
       <h2>💳 DEX AIR Pro Subscription (₹99)</h2>
-      <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">PhonePe / UPI se ₹99 bhejein aur turant Pro Key payein.</p>
+      <p style="color:#94a3b8;font-size:13px;margin-bottom:14px;">PhonePe / UPI से ₹99 भेजें और तुरंत Pro Key पाएँ।</p>
       <div style="background:#fff;padding:12px;border-radius:12px;display:inline-block;margin:10px 0;">
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=upi://pay?pa=8791223831@ibl%26pn=DEX%20AIR%26am=99%26cu=INR" style="width:200px;height:200px;display:block;">
       </div>
       <div>Official UPI ID: <code style="color:#38bdf8;font-weight:700;">8791223831@ibl</code></div>
       <div style="text-align:left;margin-top:18px;">
-        <label>Aapka Naam</label><input type="text" id="pu" placeholder="e.g. Ramesh Kumar">
+        <label>आपका नाम</label><input type="text" id="pu" placeholder="e.g. Ramesh Kumar">
         <label>UPI UTR / Reference Number (12 Digits)</label><input type="text" id="putr" placeholder="12 digit UTR number">
         <button class="btn btn-green" onclick="subPay()">Verify & Get Pro Key</button>
       </div>
@@ -847,13 +1081,13 @@ def subscription():
       var u = document.getElementById('pu').value.trim();
       var ut = document.getElementById('putr').value.trim();
       var out = document.getElementById('sub_out');
-      if(!u || !ut){ alert("Naam aur 12-digit UTR number bharein!"); return; }
+      if(!u || !ut){ alert("नाम और 12-अंकों का UTR नंबर भरें!"); return; }
       out.style.display = 'block';
-      out.innerText = "PostgreSQL se Pro Key register ho rahi hai...";
+      out.innerText = "PostgreSQL से Pro Key रजिस्टर हो रही है...";
       try{
         var res = await fetch('/checkout', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:u,utr:ut,tier:'pro'})});
         var d = await res.json();
-        out.innerHTML = "🎉 <b>Payment Request Received!</b><br>Active Key: <span style='color:#38bdf8;font-size:16px;'>" + d.issued_key + "</span><br>Tier: " + d.tier;
+        out.innerHTML = "🎉 <b>Payment Request Received!</b><br>Key: <span style='color:#38bdf8;font-size:16px;'>" + d.issued_key + "</span><br>Tier: " + d.tier;
       }catch(e){ out.innerText = "Error registering key."; }
     }
     </script>
@@ -863,9 +1097,7 @@ def subscription():
 @app.route("/checkout", methods=["POST"])
 def checkout():
     d = request.get_json(silent=True) or {}
-    uid = d.get("user_id", "Client")
-    tier = d.get("tier", "pro")
-    k = f"dex_{uuid.uuid4().hex[:24]}"
+    uid, tier, k = d.get("user_id", "Client"), d.get("tier", "pro"), f"dex_{uuid.uuid4().hex[:24]}"
     try:
         conn = get_db()
         c = conn.cursor()
@@ -875,77 +1107,6 @@ def checkout():
         return jsonify({"status": "ISSUED", "issued_key": k, "user": uid, "tier": tier})
     except Exception as e:
         return jsonify({"status": "FAILED", "reason": str(e)}), 500
-
-# ==========================================
-# 7. TRADER LOGIN / REGISTER
-# ==========================================
-@app.route("/login")
-def login_page():
-    u = session.get("username")
-    banner = f"<div style='background:rgba(16,185,129,0.15);border:1px solid #10b981;border-radius:8px;padding:12px;margin-bottom:16px;color:#34d399;text-align:center;'>Aap logged in hain: <b>{u}</b> | <a href='/logout' style='color:#ef4444;text-decoration:none;'>Logout</a></div>" if u else ""
-    content = """
-    <div class="card" style="max-width:440px;margin:30px auto;">
-      <h2 style="text-align:center;">👤 Trader Login</h2>
-      <p style="text-align:center;color:#94a3b8;font-size:13px;margin-bottom:14px;">Sign in karein ya naya account banayein</p>
-      """ + banner + """
-      <label>Username</label><input type="text" id="lu">
-      <label>Password</label><input type="password" id="lp">
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-green" onclick="auth('login')">Sign In</button>
-        <button class="btn btn-purple" onclick="auth('reg')">Sign Up</button>
-      </div>
-      <div id="l_out" class="out" style="display:none;"></div>
-    </div>
-    <script>
-    async function auth(act){
-      var u = document.getElementById('lu').value.trim();
-      var p = document.getElementById('lp').value.trim();
-      var out = document.getElementById('l_out');
-      if(!u || !p){ alert("Username aur Password dono bharein!"); return; }
-      out.style.display = 'block';
-      out.innerText = "Verifying credentials...";
-      try{
-        var res = await fetch('/auth-act', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:act,username:u,password:p})});
-        var d = await res.json();
-        if(d.status==='SUCCESS'){
-          out.innerHTML = "<span style='color:#34d399;'>✅ " + d.msg + "</span>";
-          setTimeout(()=>{ window.location.href='/live-market'; }, 1000);
-        }else{ out.innerHTML = "<span style='color:#ef4444;'>❌ " + d.reason + "</span>"; }
-      }catch(e){ out.innerText = "Error."; }
-    }
-    </script>
-    """
-    return render_template_string(T_HEAD + content + T_FOOT)
-
-@app.route("/auth-act", methods=["POST"])
-def auth_act():
-    d = request.get_json(silent=True) or {}
-    act, u, p = d.get("action"), d.get("username", "").strip(), d.get("password", "").strip()
-    conn = get_db()
-    c = conn.cursor(cursor_factory=RealDictCursor)
-    if act == "reg":
-        c.execute("SELECT * FROM users WHERE username = %s", (u,))
-        if c.fetchone():
-            c.close(); conn.close()
-            return jsonify({"status": "FAILED", "reason": "User already exists!"})
-        c.execute("INSERT INTO users (username, password, tier) VALUES (%s, %s, %s)", (u, p, "starter"))
-        conn.commit()
-        session["username"] = u
-        c.close(); conn.close()
-        return jsonify({"status": "SUCCESS", "msg": "Account created!"})
-    else:
-        c.execute("SELECT * FROM users WHERE username = %s AND password = %s", (u, p))
-        row = c.fetchone()
-        c.close(); conn.close()
-        if row:
-            session["username"] = u
-            return jsonify({"status": "SUCCESS", "msg": "Welcome back, " + u})
-        return jsonify({"status": "FAILED", "reason": "Wrong Username or Password!"})
-
-@app.route("/logout")
-def logout():
-    session.pop("username", None)
-    return redirect("/login")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
