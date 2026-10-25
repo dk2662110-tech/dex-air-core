@@ -277,89 +277,7 @@ def live_market():
     </script>
     """
     return render_template_string(T_HEAD + content + T_FOOT)
-# ==========================================
-# 4. ADVANCED CRICKET STREAMING & SCORECARD
-# ==========================================
-@app.route("/cricket-live")
-def cricket_live():
-    content = """
-    <div class="card" style="background:#0b1120;padding:16px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-        <h3 style="color:#ef4444;font-size:16px;">🔴 LIVE MATCH: IND vs NZ / IPL 2026</h3>
-        <span style="color:#34d399;font-size:12px;font-weight:700;">⚡ AUTO-UPDATING (5s)</span>
-      </div>
-
-      <div style="background:#030712;padding:14px;border-radius:10px;margin:12px 0;border:1px solid rgba(255,255,255,0.08);">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div style="font-size:26px;font-weight:900;color:#38bdf8;" id="c_score">192/4 (17.4 Ov)</div>
-          <button class="btn btn-green" style="width:auto;padding:4px 10px;font-size:11px;" onclick="ballSim()">+1 Ball</button>
-        </div>
-        <div style="color:#cbd5e1;font-size:13px;margin-top:4px;" id="c_desc">CRR: 10.86 | Target: 218 (Need 26 off 14)</div>
-        <div style="color:#94a3b8;font-size:12px;margin-top:2px;">🏏 Rohit 68* (32) | Hardik 24* (11)</div>
-      </div>
-
-      <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;">
-        <button class="btn btn-green" style="flex:1;padding:6px 10px;font-size:12px;" onclick="loadStream('server1')">📺 Server 1 (DD Sports)</button>
-        <button class="btn btn-purple" style="flex:1;padding:6px 10px;font-size:12px;" onclick="loadStream('server2')">🎙️ Server 2 (Hindi Live)</button>
-        <button class="btn" style="flex:1;background:#e11d48;padding:6px 10px;font-size:12px;" onclick="loadStream('server3')">⚡ Server 3 (IPL HD)</button>
-      </div>
-
-      <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;background:#000;">
-        <iframe id="c_iframe" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
-                src="https://www.youtube-nocookie.com/embed/jfKfPfyJRdk?autoplay=1"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen></iframe>
-      </div>
-
-      <div style="margin-top:12px;display:flex;gap:6px;">
-        <input type="text" id="custom_cricket_id" placeholder="YouTube Video ID ya Link dalein" style="margin:0;font-size:12px;">
-        <button class="btn btn-green" style="width:auto;white-space:nowrap;padding:8px 14px;" onclick="applyCustomCricket()">Play</button>
-      </div>
-    </div>
-
-    <script>
-    const streams = {
-      server1: "https://www.youtube-nocookie.com/embed/live_stream?channel=UCNAqjh23zV71l3x1E4Z19-w",
-      server2: "https://www.youtube-nocookie.com/embed/jfKfPfyJRdk",
-      server3: "https://www.youtube-nocookie.com/embed/21X5lGlDOfg"
-    };
-
-    function loadStream(srv){
-      document.getElementById('c_iframe').src = streams[srv] + "?autoplay=1";
-    }
-
-    function applyCustomCricket(){
-      let val = document.getElementById('custom_cricket_id').value.trim();
-      if(!val) return alert("Link ya ID dalein!");
-      if(val.includes("v=")) val = val.split("v=")[1].split("&")[0];
-      else if(val.includes("youtu.be/")) val = val.split("youtu.be/")[1].split("?")[0];
-      document.getElementById('c_iframe').src = "https://www.youtube-nocookie.com/embed/" + val + "?autoplay=1";
-    }
-
-    let r = 192, b = 106, w = 4;
-    function ballSim(){
-      const arr = [0, 1, 2, 4, 6, "W", 1];
-      const res = arr[Math.floor(Math.random()*arr.length)];
-      if(res === "W"){ if(w < 9) w += 1; }
-      else { r += res; }
-      b += 1;
-      let ov = Math.floor(b/6) + '.' + (b%6);
-      let crr = (r / (b/6)).toFixed(2);
-      document.getElementById('c_score').innerText = r + "/" + w + " (" + ov + " Ov)";
-      document.getElementById('c_desc').innerText = "CRR: " + crr + " | Live Projection: " + Math.round(crr*20);
-    }
-    setInterval(ballSim, 5000);
-    </script>
-    """
-    return render_template_string(
-        T_HEAD + content + T_FOOT
-    )
-
-# ==========================================
-# 5. ADVANCED VIDEO HUB WITH SEARCH & SWIPE
-# ==========================================
-@app.route("/video-hub")
-def video_hub():
+fdef video_hub():
     content = """
     <div style="max-width:500px;margin:0 auto;padding-bottom:20px;">
       
@@ -415,37 +333,238 @@ def video_hub():
       const item = catalog[curCat][curIdx];
       if(!item) return;
       document.getElementById('vh_frame').src = "https://www.youtube-nocookie.com/embed/" + item.id + "?autoplay=1";
-      document.getElementById('v_title').innerText = item.title;
-    }
+# ==========================================
+# 4. CRICKET LIVE HUB (AUTO-LOAD & FULLSCREEN)
+# ==========================================
+@app.route("/cricket-live")
+def cricket_live():
+    content = """
+    <style>
+      .player-wrapper {
+        position: relative;
+        width: 100%;
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.1);
+      }
+      .ratio-box {
+        position: relative;
+        padding-bottom: 56.25%;
+        height: 0;
+      }
+      .ratio-box iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      .player-fullscreen {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 99999 !important;
+        border-radius: 0 !important;
+      }
+      .player-fullscreen .ratio-box {
+        padding-bottom: 0 !important;
+        height: 100% !important;
+      }
+    </style>
 
-    function nextV(){
-      curIdx = (curIdx + 1) % catalog[curCat].length;
-      renderFeed();
-    }
-
-    function filterCat(cat){
-      curCat = cat;
-      curIdx = 0;
-      renderFeed();
-    }
-
-    function searchVideo(){
-      let val = document.getElementById('v_search').value.trim();
-      if(!val) return alert("Kuch search karein ya YouTube link dalein!");
-      let vidId = val;
-      if(val.includes("v=")) vidId = val.split("v=")[1].split("&")[0];
-      else if(val.includes("youtu.be/")) vidId = val.split("youtu.be/")[1].split("?")[0];
+    <div style="max-width:900px;margin:0 auto;padding-bottom:24px;">
       
-      document.getElementById('vh_frame').src = "https://www.youtube-nocookie.com/embed/" + vidId + "?autoplay=1";
-      document.getElementById('v_title').innerText = "Playing: " + val;
+      <div style="background:#0284c7;color:#fff;padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+        <span>🔔 <b>शेड्यूल:</b> टीम इंडिया लाइव मैच व टूर्नामेंट्स (शाम 7:30 PM IST)</span>
+        <span style="background:rgba(0,0,0,0.3);padding:2px 8px;border-radius:4px;font-size:11px;">ऑटो-अलर्ट</span>
+      </div>
+
+      <div class="card" style="background:#0b1120;border:1px solid #0284c7;padding:14px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div>
+            <span style="color:#ef4444;font-size:12px;font-weight:800;">● लाइव मैच ब्रॉडकास्ट</span>
+            <div style="font-size:22px;font-weight:900;color:#f8fafc;margin-top:2px;" id="c_score">INDIA vs NZ (Live)</div>
+          </div>
+          <button class="btn btn-green" style="width:auto;padding:6px 14px;font-size:12px;" onclick="toggleScreenMode()">
+            🔄 स्क्रीन रोटेट (फुल-स्क्रीन)
+          </button>
+        </div>
+      </div>
+
+      <div class="player-wrapper" id="video_container">
+        <div class="ratio-box">
+          <iframe id="main_cricket_feed"
+                  src="https://www.youtube-nocookie.com/embed/jfKfPfyJRdk?autoplay=1"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                  allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:12px;">
+        <button class="btn btn-green" onclick="setChannel('dd')">📺 दूरदर्शन स्पोर्ट्स (DD)</button>
+        <button class="btn btn-purple" onclick="setChannel('hindi')">🎙️ लाइव हिंदी कमेंट्री</button>
+        <button class="btn" style="background:#0284c7;" onclick="setChannel('analysis')">📊 स्टूडियो एनालिसिस</button>
+      </div>
+
+    </div>
+
+    <script>
+    const feeds = {
+      dd: "https://www.youtube-nocookie.com/embed/live_stream?channel=UCNAqjh23zV71l3x1E4Z19-w",
+      hindi: "https://www.youtube-nocookie.com/embed/jfKfPfyJRdk",
+      analysis: "https://www.youtube-nocookie.com/embed/21X5lGlDOfg"
+    };
+
+    function setChannel(ch) {
+      document.getElementById('main_cricket_feed').src = feeds[ch] + "?autoplay=1";
     }
 
-    window.onload = renderFeed;
+    function toggleScreenMode() {
+      const el = document.getElementById('video_container');
+      if (!document.fullscreenElement) {
+        if (el.requestFullscreen) { el.requestFullscreen(); }
+        else if (el.webkitRequestFullscreen) { el.webkitRequestFullscreen(); }
+      } else {
+        if (document.exitFullscreen) { document.exitFullscreen(); }
+      }
+    }
     </script>
     """
     return render_template_string(
         T_HEAD + content + T_FOOT
     )
+
+# ==========================================
+# 5. HINDI REELS & VIDEO HUB (ADVANCED SEARCH)
+# ==========================================
+@app.route("/video-hub")
+def video_hub():
+    content = """
+    <style>
+      .reels-box {
+        position: relative;
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+        height: 74vh;
+        border-radius: 18px;
+        overflow: hidden;
+        background: #000;
+        border: 2px solid rgba(225,29,72,0.4);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+      }
+      .reels-box iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      .reels-overlay {
+        position: absolute;
+        bottom: 12px;
+        left: 12px;
+        right: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(3,7,18,0.85);
+        padding: 8px 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.1);
+      }
+    </style>
+
+    <div style="max-width:600px;margin:0 auto;padding-bottom:24px;">
+      
+      <div style="display:flex;gap:6px;margin-bottom:12px;">
+        <input type="text" id="v_search" placeholder="हिंदी गाने, रील्स या आर्मी वीडियो खोजें..." style="margin:0;font-size:13px;">
+        <button class="btn btn-green" style="width:auto;padding:8px 16px;white-space:nowrap;" onclick="searchHindiVideos()">सर्च करें</button>
+      </div>
+
+      <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;">
+        <button class="btn" style="background:#e11d48;font-size:11px;padding:6px 12px;white-space:nowrap;" onclick="setFeed('reels')">🔥 हिंदी रील्स</button>
+        <button class="btn" style="background:#0284c7;font-size:11px;padding:6px 12px;white-space:nowrap;" onclick="setFeed('songs')">🎵 हिंदी गाने</button>
+        <button class="btn" style="background:#10b981;font-size:11px;padding:6px 12px;white-space:nowrap;" onclick="setFeed('army')">🇮🇳 आर्मी रील्स</button>
+        <button class="btn" style="background:#8b5cf6;font-size:11px;padding:6px 12px;white-space:nowrap;" onclick="setFeed('cricket')">🏏 क्रिकेट शॉट्स</button>
+      </div>
+
+      <div class="reels-box">
+        <iframe id="reels_iframe"
+                src="https://www.youtube.com/embed?listType=search&list=hindi%20romantic%20songs%20status%20shorts&autoplay=1"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen>
+        </iframe>
+        
+        <div class="reels-overlay">
+          <span id="feed_title" style="font-size:12px;color:#f8fafc;font-weight:700;">🔥 ट्रेंडिंग हिंदी रील्स</span>
+          <button class="btn btn-green" style="width:auto;padding:6px 12px;font-size:11px;" onclick="nextShort()">अगला (Next) ⬇️</button>
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+    const feeds = {
+      reels: [
+        { title: "ट्रेंडिंग बॉलीवुड रील्स", query: "trending hindi reels shorts" },
+        { title: "हिंदी लव स्टेटस", query: "superhit hindi song reels" }
+      ],
+      songs: [
+        { title: "90s एवरग्रीन हिंदी रोमांस", query: "90s romantic hindi songs shorts" },
+        { title: "न्यू बॉलीवुड हिट्स", query: "latest bollywood love songs" }
+      ],
+      army: [
+        { title: "भारतीय सेना जोश रील्स", query: "indian army josh status reels" },
+        { title: "देशभक्ति स्टेटस", query: "indian army motivation shorts" }
+      ],
+      cricket: [
+        { title: "विराट कोहली शॉट्स", query: "virat kohli best batting reels" },
+        { title: "रोहित शर्मा छक्के", query: "rohit sharma sixes shorts" }
+      ]
+    };
+
+    let activeCategory = 'reels';
+    let currentIndex = 0;
+
+    function setFeed(cat) {
+      activeCategory = cat;
+      currentIndex = 0;
+      loadActiveShort();
+    }
+
+    function loadActiveShort() {
+      const list = feeds[activeCategory];
+      const item = list[currentIndex % list.length];
+      const enc = encodeURIComponent(item.query);
+      document.getElementById('reels_iframe').src = "https://www.youtube.com/embed?listType=search&list=" + enc + "&autoplay=1";
+      document.getElementById('feed_title').innerText = item.title;
+    }
+
+    function nextShort() {
+      currentIndex++;
+      loadActiveShort();
+    }
+
+    function searchHindiVideos() {
+      const query = document.getElementById('v_search').value.trim();
+      if (!query) {
+        alert("कृपया कुछ लिखें!");
+        return;
+      }
+      const formatted = encodeURIComponent(query + " hindi reels shorts");
+      document.getElementById('reels_iframe').src = "https://www.youtube.com/embed?listType=search&list=" + formatted + "&autoplay=1";
+      document.getElementById('feed_title').innerText = "सर्च: " + query;
+    }
+    </script>
+    """
+    return render_template_string(
+        T_HEAD + content + T_FOOT
+    )
+    
     
 
 @app.route("/calculator")
