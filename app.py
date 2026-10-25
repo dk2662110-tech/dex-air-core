@@ -277,54 +277,176 @@ def live_market():
     </script>
     """
     return render_template_string(T_HEAD + content + T_FOOT)
+# ==========================================
+# 4. ADVANCED CRICKET STREAMING & SCORECARD
+# ==========================================
 @app.route("/cricket-live")
 def cricket_live():
     content = """
     <div class="card" style="background:#0b1120;padding:16px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3 style="color:#ef4444;">🔴 LIVE MATCH: INDIA vs NZ</h3>
-        <span style="color:#34d399;font-weight:700;">⚡ AUTO-UPDATING</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <h3 style="color:#ef4444;font-size:16px;">🔴 LIVE MATCH: IND vs NZ / IPL 2026</h3>
+        <span style="color:#34d399;font-size:12px;font-weight:700;">⚡ AUTO-UPDATING (5s)</span>
       </div>
-      <div style="background:#030712;padding:14px;border-radius:10px;margin:12px 0;">
-        <div style="font-size:26px;font-weight:900;" id="c_score">184/3 (17.2 Ov)</div>
-        <div style="color:#94a3b8;font-size:13px;" id="c_desc">CRR: 10.61 | Need 26 from 16 balls</div>
+
+      <div style="background:#030712;padding:14px;border-radius:10px;margin:12px 0;border:1px solid rgba(255,255,255,0.08);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:26px;font-weight:900;color:#38bdf8;" id="c_score">192/4 (17.4 Ov)</div>
+          <button class="btn btn-green" style="width:auto;padding:4px 10px;font-size:11px;" onclick="ballSim()">+1 Ball</button>
+        </div>
+        <div style="color:#cbd5e1;font-size:13px;margin-top:4px;" id="c_desc">CRR: 10.86 | Target: 218 (Need 26 off 14)</div>
+        <div style="color:#94a3b8;font-size:12px;margin-top:2px;">🏏 Rohit 68* (32) | Hardik 24* (11)</div>
       </div>
-      <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;">
+
+      <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;">
+        <button class="btn btn-green" style="flex:1;padding:6px 10px;font-size:12px;" onclick="loadStream('server1')">📺 Server 1 (DD Sports)</button>
+        <button class="btn btn-purple" style="flex:1;padding:6px 10px;font-size:12px;" onclick="loadStream('server2')">🎙️ Server 2 (Hindi Live)</button>
+        <button class="btn" style="flex:1;background:#e11d48;padding:6px 10px;font-size:12px;" onclick="loadStream('server3')">⚡ Server 3 (IPL HD)</button>
+      </div>
+
+      <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;background:#000;">
         <iframe id="c_iframe" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
-                src="https://www.youtube.com/embed/live_stream?channel=UCNAqjh23zV71l3x1E4Z19-w&autoplay=1" allowfullscreen></iframe>
+                src="https://www.youtube-nocookie.com/embed/jfKfPfyJRdk?autoplay=1"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen></iframe>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:6px;">
+        <input type="text" id="custom_cricket_id" placeholder="YouTube Video ID ya Link dalein" style="margin:0;font-size:12px;">
+        <button class="btn btn-green" style="width:auto;white-space:nowrap;padding:8px 14px;" onclick="applyCustomCricket()">Play</button>
       </div>
     </div>
+
     <script>
-    let r = 184, b = 104;
-    function updateCricket(){
-      r += Math.floor(Math.random()*4); b += 1;
-      let ov = Math.floor(b/6) + '.' + (b%6);
-      document.getElementById('c_score').innerText = r + "/3 (" + ov + " Ov)";
+    const streams = {
+      server1: "https://www.youtube-nocookie.com/embed/live_stream?channel=UCNAqjh23zV71l3x1E4Z19-w",
+      server2: "https://www.youtube-nocookie.com/embed/jfKfPfyJRdk",
+      server3: "https://www.youtube-nocookie.com/embed/21X5lGlDOfg"
+    };
+
+    function loadStream(srv){
+      document.getElementById('c_iframe').src = streams[srv] + "?autoplay=1";
     }
-    setInterval(updateCricket, 5000);
+
+    function applyCustomCricket(){
+      let val = document.getElementById('custom_cricket_id').value.trim();
+      if(!val) return alert("Link ya ID dalein!");
+      if(val.includes("v=")) val = val.split("v=")[1].split("&")[0];
+      else if(val.includes("youtu.be/")) val = val.split("youtu.be/")[1].split("?")[0];
+      document.getElementById('c_iframe').src = "https://www.youtube-nocookie.com/embed/" + val + "?autoplay=1";
+    }
+
+    let r = 192, b = 106, w = 4;
+    function ballSim(){
+      const arr = [0, 1, 2, 4, 6, "W", 1];
+      const res = arr[Math.floor(Math.random()*arr.length)];
+      if(res === "W"){ if(w < 9) w += 1; }
+      else { r += res; }
+      b += 1;
+      let ov = Math.floor(b/6) + '.' + (b%6);
+      let crr = (r / (b/6)).toFixed(2);
+      document.getElementById('c_score').innerText = r + "/" + w + " (" + ov + " Ov)";
+      document.getElementById('c_desc').innerText = "CRR: " + crr + " | Live Projection: " + Math.round(crr*20);
+    }
+    setInterval(ballSim, 5000);
     </script>
     """
-    return render_template_string(T_HEAD + content + T_FOOT)
+    return render_template_string(
+        T_HEAD + content + T_FOOT
+    )
 
+# ==========================================
+# 5. ADVANCED VIDEO HUB WITH SEARCH & SWIPE
+# ==========================================
 @app.route("/video-hub")
 def video_hub():
     content = """
-    <div style="max-width:480px;margin:0 auto;height:75vh;position:relative;border-radius:16px;overflow:hidden;background:#000;">
-      <iframe id="vh_frame" style="width:100%;height:100%;border:none;" src="https://www.youtube.com/embed/9bZkp7q19f0?autoplay=1" allowfullscreen></iframe>
-      <div style="position:absolute;bottom:10px;left:10px;right:10px;display:flex;gap:8px;">
-        <button class="btn btn-green" onclick="nextV()">Next Video ⬇️</button>
+    <div style="max-width:500px;margin:0 auto;padding-bottom:20px;">
+      
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <input type="text" id="v_search" placeholder="Search Video / Paste YouTube link" style="margin:0;font-size:12px;">
+        <button class="btn btn-green" style="width:auto;padding:8px 14px;" onclick="searchVideo()">Search</button>
+      </div>
+
+      <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;">
+        <button class="btn" style="background:#e11d48;font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="filterCat('trend')">🔥 Reels</button>
+        <button class="btn" style="background:#0284c7;font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="filterCat('cricket')">🏏 Cricket</button>
+        <button class="btn" style="background:#10b981;font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="filterCat('trading')">📈 Trading</button>
+        <button class="btn" style="background:#8b5cf6;font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="filterCat('songs')">🎵 Songs</button>
+      </div>
+
+      <div style="position:relative;height:70vh;border-radius:14px;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,0.1);">
+        <iframe id="vh_frame" style="width:100%;height:100%;border:none;"
+                src="https://www.youtube-nocookie.com/embed/9bZkp7q19f0?autoplay=1"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
+                allowfullscreen></iframe>
+
+        <div style="position:absolute;bottom:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.7);padding:8px 12px;border-radius:8px;">
+          <span id="v_title" style="font-size:12px;font-weight:700;color:#f8fafc;max-width:260px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">Video Title</span>
+          <button class="btn btn-green" style="width:auto;padding:6px 14px;font-size:12px;" onclick="nextV()">Next ⬇️</button>
+        </div>
       </div>
     </div>
+
     <script>
-    const vids = ["9bZkp7q19f0", "JhHMJCUmq28", "aircAruvnKk"];
-    let vi = 0;
-    function nextV(){
-      vi = (vi + 1) % vids.length;
-      document.getElementById('vh_frame').src = "https://www.youtube.com/embed/" + vids[vi] + "?autoplay=1";
+    const catalog = {
+      trend: [
+        {id: "9bZkp7q19f0", title: "Top Viral Shorts & Reels"},
+        {id: "kqtD5dpn9C8", title: "Python Quick Overview"}
+      ],
+      cricket: [
+        {id: "jfKfPfyJRdk", title: "India Live Cricket Highlights"},
+        {id: "21X5lGlDOfg", title: "IPL Mega Moments"}
+      ],
+      trading: [
+        {id: "bZ6r7T7X04g", title: "Price Action Trading Course"},
+        {id: "aircAruvnKk", title: "Market AI Intelligence"}
+      ],
+      songs: [
+        {id: "kJQP7kiw5Fk", title: "Top Hits Music Stream"},
+        {id: "3JZ_D3ELwOQ", title: "Classic Romantic Melodies"}
+      ]
+    };
+
+    let curCat = "trend";
+    let curIdx = 0;
+
+    function renderFeed(){
+      const item = catalog[curCat][curIdx];
+      if(!item) return;
+      document.getElementById('vh_frame').src = "https://www.youtube-nocookie.com/embed/" + item.id + "?autoplay=1";
+      document.getElementById('v_title').innerText = item.title;
     }
+
+    function nextV(){
+      curIdx = (curIdx + 1) % catalog[curCat].length;
+      renderFeed();
+    }
+
+    function filterCat(cat){
+      curCat = cat;
+      curIdx = 0;
+      renderFeed();
+    }
+
+    function searchVideo(){
+      let val = document.getElementById('v_search').value.trim();
+      if(!val) return alert("Kuch search karein ya YouTube link dalein!");
+      let vidId = val;
+      if(val.includes("v=")) vidId = val.split("v=")[1].split("&")[0];
+      else if(val.includes("youtu.be/")) vidId = val.split("youtu.be/")[1].split("?")[0];
+      
+      document.getElementById('vh_frame').src = "https://www.youtube-nocookie.com/embed/" + vidId + "?autoplay=1";
+      document.getElementById('v_title').innerText = "Playing: " + val;
+    }
+
+    window.onload = renderFeed;
     </script>
     """
-    return render_template_string(T_HEAD + content + T_FOOT)
+    return render_template_string(
+        T_HEAD + content + T_FOOT
+    )
+    
 
 @app.route("/calculator")
 def calculator_page():
