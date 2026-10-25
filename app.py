@@ -1301,11 +1301,14 @@ def math_master():
     """
     return render_template_string(T_HEAD + content + T_FOOT)
     
+# ==========================================
+# 11. SUBSCRIPTION & SERVER RUN
+# ==========================================
 @app.route("/subscription")
 def subscription():
     content = """
     <div class="card" style="max-width:650px;margin:0 auto;text-align:center;">
-      <h2>💳 DEX AIR Pro Subscription (₹99)</h2>
+      <h2>DEX AIR Pro Subscription (Rs 99)</h2>
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=8791223831@ibl%26pn=DEX%20AIR%26am=99%26cu=INR" style="margin:14px auto;display:block;">
       <div>Official UPI: <code style="color:#38bdf8;">8791223831@ibl</code></div>
     </div>
@@ -1314,5 +1317,4 @@ def subscription():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
-
-            
+    
