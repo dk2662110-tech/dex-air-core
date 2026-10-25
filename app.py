@@ -1342,7 +1342,9 @@ def smart_tools():
     function calcG(){ var v = Number(document.getElementById('in_p').value); document.getElementById('st_out').innerHTML = "Base: ₹"+v+" | <b>Total (18% GST): ₹"+(v*1.18).toFixed(2)+"</b>"; }
     function calcE(){ var p = Number(document.getElementById('in_p').value), r = (10.5/12)/100, n = 36; var emi = (p*r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1); document.getElementById('st_out').innerHTML = "<b>Monthly EMI: ₹"+Math.round(emi)+" / माह</b>"; }
     </script>
-        return render_template_string(T_HEAD + content + T_FOOT)
+            return render_template_string(
+        T_HEAD + content + T_FOOT
+    )
 
 # ==========================================
 # 11. SUBSCRIPTION & SERVER RUN
@@ -1356,8 +1358,11 @@ def subscription():
       <div>Official UPI: <code style="color:#38bdf8;">8791223831@ibl</code></div>
     </div>
     """
-    return render_template_string(T_HEAD + content + T_FOOT)
+    return render_template_string(
+        T_HEAD + content + T_FOOT
+    )
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
     
