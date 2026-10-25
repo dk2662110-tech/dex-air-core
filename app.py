@@ -277,62 +277,78 @@ def live_market():
     </script>
     """
     return render_template_string(T_HEAD + content + T_FOOT)
-fdef video_hub():
+# ==========================================
+# 4. REAL LIVE CRICKET STREAM (AUTO SEARCH & PLAY)
+# ==========================================
+@app.route("/cricket-live")
+def cricket_live():
     content = """
-    <div style="max-width:500px;margin:0 auto;padding-bottom:20px;">
+    <div style="max-width:900px;margin:0 auto;padding-bottom:24px;">
       
-      <div style="display:flex;gap:6px;margin-bottom:10px;">
-        <input type="text" id="v_search" placeholder="Search Video / Paste YouTube link" style="margin:0;font-size:12px;">
-        <button class="btn btn-green" style="width:auto;padding:8px 14px;" onclick="searchVideo()">Search</button>
+      <div style="background:#0284c7;color:#fff;padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+        <span>🔔 <b>लाइव स्ट्रीम:</b> मैच ब्रॉडकास्ट एवं लाइव स्कोर (ऑटो-कनेक्टेड)</span>
+        <span style="background:rgba(0,0,0,0.3);padding:2px 8px;border-radius:4px;font-size:11px;">🟢 LIVE 24x7</span>
       </div>
 
-      <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;">
-        <button class="btn" style="background:#e11d48;font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="filterCat('trend')">🔥 Reels</button>
-        <button class="btn" style="background:#0284c7;font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="filterCat('cricket')">🏏 Cricket</button>
-        <button class="btn" style="background:#10b981;font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="filterCat('trading')">📈 Trading</button>
-        <button class="btn" style="background:#8b5cf6;font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="filterCat('songs')">🎵 Songs</button>
-      </div>
-
-      <div style="position:relative;height:70vh;border-radius:14px;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,0.1);">
-        <iframe id="vh_frame" style="width:100%;height:100%;border:none;"
-                src="https://www.youtube-nocookie.com/embed/9bZkp7q19f0?autoplay=1"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
-                allowfullscreen></iframe>
-
-        <div style="position:absolute;bottom:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.7);padding:8px 12px;border-radius:8px;">
-          <span id="v_title" style="font-size:12px;font-weight:700;color:#f8fafc;max-width:260px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">Video Title</span>
-          <button class="btn btn-green" style="width:auto;padding:6px 14px;font-size:12px;" onclick="nextV()">Next ⬇️</button>
+      <div class="card" style="background:#0b1120;border:1px solid #0284c7;padding:14px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div>
+            <span style="color:#ef4444;font-size:12px;font-weight:800;">● लाइव मैच ब्रॉडकास्ट</span>
+            <div style="font-size:20px;font-weight:900;color:#f8fafc;margin-top:2px;" id="c_channel_name">डीडी स्पोर्ट्स लाइव (DD Sports)</div>
+          </div>
+          <button class="btn btn-green" style="width:auto;padding:6px 14px;font-size:12px;" onclick="toggleScreenMode()">
+            🔄 स्क्रीन रोटेट
+          </button>
         </div>
       </div>
+
+      <div id="video_container" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;background:#000;">
+        <iframe id="main_cricket_feed" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+                src="https://www.youtube.com/embed?listType=search&list=DD+Sports+live+match+cricket&autoplay=1"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                allowfullscreen>
+        </iframe>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:12px;">
+        <button class="btn btn-green" onclick="playLive('dd')">📺 DD Sports Live</button>
+        <button class="btn btn-purple" onclick="playLive('hindi')">🎙️ लाइव हिंदी कमेंट्री</button>
+        <button class="btn" style="background:#0284c7;" onclick="playLive('cricket_live')">⚡ Live Cricket TV</button>
+      </div>
+
     </div>
 
     <script>
-    const catalog = {
-      trend: [
-        {id: "9bZkp7q19f0", title: "Top Viral Shorts & Reels"},
-        {id: "kqtD5dpn9C8", title: "Python Quick Overview"}
-      ],
-      cricket: [
-        {id: "jfKfPfyJRdk", title: "India Live Cricket Highlights"},
-        {id: "21X5lGlDOfg", title: "IPL Mega Moments"}
-      ],
-      trading: [
-        {id: "bZ6r7T7X04g", title: "Price Action Trading Course"},
-        {id: "aircAruvnKk", title: "Market AI Intelligence"}
-      ],
-      songs: [
-        {id: "kJQP7kiw5Fk", title: "Top Hits Music Stream"},
-        {id: "3JZ_D3ELwOQ", title: "Classic Romantic Melodies"}
-      ]
+    const streamQueries = {
+      dd: { name: "डीडी स्पोर्ट्स लाइव (DD Sports)", q: "DD Sports live match cricket" },
+      hindi: { name: "लाइव हिंदी कमेंट्री (Official)", q: "live cricket commentary hindi match today" },
+      cricket_live: { name: "लाइव क्रिकेट ब्रॉडकास्ट", q: "live cricket match streaming today" }
     };
 
-    let curCat = "trend";
-    let curIdx = 0;
+    function playLive(key) {
+      const item = streamQueries[key];
+      document.getElementById('c_channel_name').innerText = item.name;
+      const enc = encodeURIComponent(item.q);
+      document.getElementById('main_cricket_feed').src = "https://www.youtube.com/embed?listType=search&list=" + enc + "&autoplay=1";
+    }
 
-    function renderFeed(){
-      const item = catalog[curCat][curIdx];
-      if(!item) return;
-      document.getElementById('vh_frame').src = "https://www.youtube-nocookie.com/embed/" + item.id + "?autoplay=1";
+    function toggleScreenMode() {
+      const el = document.getElementById('video_container');
+      if (!document.fullscreenElement) {
+        if (el.requestFullscreen) { el.requestFullscreen(); }
+        else if (el.webkitRequestFullscreen) { el.webkitRequestFullscreen(); }
+      } else {
+        if (document.exitFullscreen) { document.exitFullscreen(); }
+      }
+    }
+    </script>
+    """
+    return render_template_string(
+        T_HEAD + content + T_FOOT
+    )
+    
+
+    .src = "https://www.youtube-nocookie.com/embed/" + item.id + "?autoplay=1";
 # ==========================================
 # 4. CRICKET LIVE HUB (AUTO-LOAD & FULLSCREEN)
 # ==========================================
@@ -359,69 +375,59 @@ def cricket_live():
         left: 0;
         width: 100%;
         height: 100%;
-        border: 0;
-      }
-      .player-fullscreen {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        z-index: 99999 !important;
-        border-radius: 0 !important;
-      }
-      .player-fullscreen .ratio-box {
-        padding-bottom: 0 !important;
-        height: 100% !important;
-      }
-    </style>
-
+# ==========================================
+# 4. REAL LIVE CRICKET STREAM (AUTO SEARCH & PLAY)
+# ==========================================
+@app.route("/cricket-live")
+def cricket_live():
+    content = """
     <div style="max-width:900px;margin:0 auto;padding-bottom:24px;">
       
       <div style="background:#0284c7;color:#fff;padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
-        <span>🔔 <b>शेड्यूल:</b> टीम इंडिया लाइव मैच व टूर्नामेंट्स (शाम 7:30 PM IST)</span>
-        <span style="background:rgba(0,0,0,0.3);padding:2px 8px;border-radius:4px;font-size:11px;">ऑटो-अलर्ट</span>
+        <span>🔔 <b>लाइव स्ट्रीम:</b> मैच ब्रॉडकास्ट एवं लाइव स्कोर (ऑटो-कनेक्टेड)</span>
+        <span style="background:rgba(0,0,0,0.3);padding:2px 8px;border-radius:4px;font-size:11px;">🟢 LIVE 24x7</span>
       </div>
 
       <div class="card" style="background:#0b1120;border:1px solid #0284c7;padding:14px;margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
           <div>
             <span style="color:#ef4444;font-size:12px;font-weight:800;">● लाइव मैच ब्रॉडकास्ट</span>
-            <div style="font-size:22px;font-weight:900;color:#f8fafc;margin-top:2px;" id="c_score">INDIA vs NZ (Live)</div>
+            <div style="font-size:20px;font-weight:900;color:#f8fafc;margin-top:2px;" id="c_channel_name">डीडी स्पोर्ट्स लाइव (DD Sports)</div>
           </div>
           <button class="btn btn-green" style="width:auto;padding:6px 14px;font-size:12px;" onclick="toggleScreenMode()">
-            🔄 स्क्रीन रोटेट (फुल-स्क्रीन)
+            🔄 स्क्रीन रोटेट
           </button>
         </div>
       </div>
 
-      <div class="player-wrapper" id="video_container">
-        <div class="ratio-box">
-          <iframe id="main_cricket_feed"
-                  src="https://www.youtube-nocookie.com/embed/jfKfPfyJRdk?autoplay=1"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                  allowfullscreen>
-          </iframe>
-        </div>
+      <div id="video_container" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;background:#000;">
+        <iframe id="main_cricket_feed" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+                src="https://www.youtube.com/embed?listType=search&list=DD+Sports+live+match+cricket&autoplay=1"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                allowfullscreen>
+        </iframe>
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:12px;">
-        <button class="btn btn-green" onclick="setChannel('dd')">📺 दूरदर्शन स्पोर्ट्स (DD)</button>
-        <button class="btn btn-purple" onclick="setChannel('hindi')">🎙️ लाइव हिंदी कमेंट्री</button>
-        <button class="btn" style="background:#0284c7;" onclick="setChannel('analysis')">📊 स्टूडियो एनालिसिस</button>
+        <button class="btn btn-green" onclick="playLive('dd')">📺 DD Sports Live</button>
+        <button class="btn btn-purple" onclick="playLive('hindi')">🎙️ लाइव हिंदी कमेंट्री</button>
+        <button class="btn" style="background:#0284c7;" onclick="playLive('cricket_live')">⚡ Live Cricket TV</button>
       </div>
 
     </div>
 
     <script>
-    const feeds = {
-      dd: "https://www.youtube-nocookie.com/embed/live_stream?channel=UCNAqjh23zV71l3x1E4Z19-w",
-      hindi: "https://www.youtube-nocookie.com/embed/jfKfPfyJRdk",
-      analysis: "https://www.youtube-nocookie.com/embed/21X5lGlDOfg"
+    const streamQueries = {
+      dd: { name: "डीडी स्पोर्ट्स लाइव (DD Sports)", q: "DD Sports live match cricket" },
+      hindi: { name: "लाइव हिंदी कमेंट्री (Official)", q: "live cricket commentary hindi match today" },
+      cricket_live: { name: "लाइव क्रिकेट ब्रॉडकास्ट", q: "live cricket match streaming today" }
     };
 
-    function setChannel(ch) {
-      document.getElementById('main_cricket_feed').src = feeds[ch] + "?autoplay=1";
+    function playLive(key) {
+      const item = streamQueries[key];
+      document.getElementById('c_channel_name').innerText = item.name;
+      const enc = encodeURIComponent(item.q);
+      document.getElementById('main_cricket_feed').src = "https://www.youtube.com/embed?listType=search&list=" + enc + "&autoplay=1";
     }
 
     function toggleScreenMode() {
@@ -437,6 +443,8 @@ def cricket_live():
     """
     return render_template_string(
         T_HEAD + content + T_FOOT
+)
+    
     )
 
 # ==========================================
