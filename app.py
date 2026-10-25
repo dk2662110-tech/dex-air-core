@@ -1255,7 +1255,7 @@ def news():
     }
     window.onload = function() { loadLiveNews(); };
     </script>
-    """
+    
   return render_template_string(T_HEAD + content + T_FOOT)
 
 @app.route("/api/live-news-feed")
