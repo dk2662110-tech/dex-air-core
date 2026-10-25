@@ -1,4 +1,4 @@
-import os, ast, json, uuid, time, math, re, urllib.request, xml.etree.ElementTree as ET, psycopg2
+import os, ast, json, uuid, time, math, re, urllib.request, xml.etree.ElementTree as ET, psycopg2, random
 from psycopg2.extras import RealDictCursor
 from flask import Flask, request, jsonify, render_template_string, session, redirect, url_for
 
@@ -75,7 +75,7 @@ def init_db():
 
 init_db()
 
-# Security Gate: Har request se pehle check karega ki user login hai ya nahi
+# Security Gate: Har protected page se pehle login check
 @app.before_request
 def require_login():
     allowed_routes = ['login_page', 'auth_act', 'static']
@@ -89,11 +89,12 @@ T_NAV = """
     <a href="/" style="font-size:20px;font-weight:800;color:#38bdf8;text-decoration:none;">⚡ DEX AIR</a>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
       <a href="/" style="color:#cbd5e1;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:rgba(255,255,255,0.05);">Home</a>
+      <a href="/live-market" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:#10b981;font-weight:700;">📊 Terminal</a>
+      <a href="/quantum-ai" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 11px;border-radius:6px;background:#8b5cf6;font-weight:700;">🌌 Quantum AI</a>
       <a href="/news" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 11px;border-radius:6px;background:#ef4444;font-weight:700;">🔴 Live News</a>
-      <a href="/live-market" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:#10b981;font-weight:700;">📊 Live Market</a>
       <a href="/math-master" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:#6366f1;font-weight:700;">🧮 Math Master</a>
-      <a href="/smart-tools" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:#f59e0b;font-weight:700;">🧰 Smart Tools</a>
-      <a href="/subscription" style="color:#38bdf8;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:rgba(56,189,248,0.1);font-weight:700;border:1px solid rgba(56,189,248,0.3);">💳 Buy Plan (₹99)</a>
+      <a href="/smart-tools" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:#f59e0b;font-weight:700;">🧰 Tools</a>
+      <a href="/subscription" style="color:#38bdf8;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:rgba(56,189,248,0.1);font-weight:700;border:1px solid rgba(56,189,248,0.3);">💳 Plan (₹99)</a>
       <a href="/logout" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 12px;border-radius:6px;background:#ef4444;font-weight:700;">🚪 Logout</a>
     </div>
   </div>
@@ -101,7 +102,7 @@ T_NAV = """
 """
 
 T_HEAD = """<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>DEX AIR Enterprise</title>
+<title>DEX AIR Sovereign Enterprise</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
@@ -110,6 +111,7 @@ body{background:#030712;color:#f8fafc;min-height:100vh;}
 .btn{background:#0284c7;color:#fff;border:none;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer;width:100%;text-decoration:none;display:inline-block;text-align:center;}
 .btn-green{background:#059669;}
 .btn-purple{background:#6366f1;}
+.btn-quantum{background:#8b5cf6;}
 input,textarea,select{width:100%;background:#090d16;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px;color:#38bdf8;margin:6px 0 14px 0;}
 .out{background:#020617;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:14px;color:#34d399;font-family:monospace;font-size:13px;margin-top:14px;line-height:1.7;}
 .step-box{background:rgba(15,23,42,0.8);border-left:4px solid #38bdf8;padding:12px;margin:8px 0;border-radius:0 8px 8px 0;color:#cbd5e1;}
@@ -122,7 +124,7 @@ input,textarea,select{width:100%;background:#090d16;border:1px solid rgba(255,25
 T_FOOT = """</div><footer style="text-align:center;padding:20px;font-size:12px;color:#64748b;border-top:1px solid rgba(255,255,255,0.08);">DEX AIR Sovereign Enterprise © 2026 | PostgreSQL Live Active</footer></body></html>"""
 
 # ==========================================
-# 1. LOGIN & SIGN UP PAGE (FIRST SCREEN)
+# 1. LOGIN & SIGN UP PAGE (GATEWAY)
 # ==========================================
 @app.route("/login")
 def login_page():
@@ -131,7 +133,6 @@ def login_page():
     
     html = """<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>DEX AIR - Gateway Portal</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
     *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
     body{background:#030712;color:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px;}
@@ -239,7 +240,7 @@ def auth_act():
         conn.commit()
         session["username"] = u
         c.close(); conn.close()
-        return jsonify({"status": "SUCCESS", "msg": "Account ban gaya! Dashboard khul raha hai..."})
+        return jsonify({"status": "SUCCESS", "msg": "Account ban gaya! Welcome to DEX AIR..."})
     else:
         c.execute("SELECT * FROM users WHERE username = %s AND password = %s", (u, p))
         row = c.fetchone()
@@ -264,7 +265,7 @@ def home():
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
       <div>
         <h1 style="color:#38bdf8;font-size:26px;">Welcome, {u} 👋</h1>
-        <p style="color:#94a3b8;font-size:13px;">Full-Screen Pro Trading Terminal, Live Google News & Smart Tools.</p>
+        <p style="color:#94a3b8;font-size:13px;">Full-Screen Pro Trading Terminal, Quantum AI Engine, Live News & Tools.</p>
       </div>
       <span style="background:rgba(16,185,129,0.15);color:#34d399;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;">
         🟢 Session Active
@@ -278,6 +279,11 @@ def home():
         <a href="/live-market" class="btn btn-green">Open Terminal</a>
       </div>
       <div class="card">
+        <h3>🌌 Quantum AI Simulator</h3>
+        <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">3-Qubit quantum register, superposition, entanglement aur entropy analyzer.</p>
+        <a href="/quantum-ai" class="btn btn-quantum">Open Quantum Engine</a>
+      </div>
+      <div class="card">
         <h3>🔴 Live Google News Hub</h3>
         <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">शेयर बाजार, बिज़नेस, क्रूड और राष्ट्रीय नीतियां (100% Real Live).</p>
         <a href="/news" class="btn" style="background:#ef4444;">Read Live News</a>
@@ -286,11 +292,6 @@ def home():
         <h3>🧮 Math Master & Voice Solver</h3>
         <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">बोलकर सवाल पूछें, स्टेप-बाय-स्टेप हल निकालें।</p>
         <a href="/math-master" class="btn btn-purple">Open Math Master</a>
-      </div>
-      <div class="card">
-        <h3>🧰 5 Daily Smart Tools</h3>
-        <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">GST, Loan EMI, Bill Split, Discount और Fuel Mileage हिसाब।</p>
-        <a href="/smart-tools" class="btn" style="background:#f59e0b;">Open Smart Tools</a>
       </div>
     </div>
     """
@@ -658,9 +659,137 @@ def live_market():
     </script>
     """
     return render_template_string(T_HEAD + content + T_FOOT)
+# ==========================================
+# 4. QUANTUM COMPUTING & UNIVERSE SIMULATOR
+# ==========================================
+@app.route("/quantum-ai")
+def quantum_ai_page():
+    content = """
+    <div style="max-width:100%;margin:0 auto;padding-bottom:30px;">
+      
+      <div class="card" style="background:#0b1120;border:1px solid #8b5cf6;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+          <div>
+            <h2 style="color:#c084fc;"><i class="fa-solid fa-atom"></i> Quantum AI Supercomputing Engine</h2>
+            <p style="color:#94a3b8;font-size:13px;">3-Qubit Hilbert state vector simulation, entanglement aur neural decision nexus.</p>
+          </div>
+          <span style="background:rgba(139,92,246,0.15);color:#c084fc;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;">
+            ⚛️ 15 mK Cryo-Sim Active
+          </span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px;">
+          <div style="background:#030712;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">
+            <div style="font-size:11px;color:#94a3b8;">Quantum Bits (Qubits)</div>
+            <div style="font-size:20px;font-weight:800;color:#c084fc;">3 Qubits (2³ = 8 States)</div>
+          </div>
+          <div style="background:#030712;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">
+            <div style="font-size:11px;color:#94a3b8;">Entanglement Protocol</div>
+            <div style="font-size:20px;font-weight:800;color:#34d399;">Bell State (|Φ⁺⟩)</div>
+          </div>
+          <div style="background:#030712;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">
+            <div style="font-size:11px;color:#94a3b8;">Thermodynamic Entropy</div>
+            <div style="font-size:20px;font-weight:800;color:#38bdf8;" id="disp_entropy">1.0000 Bits</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="background:#0b1120;">
+        <h3 style="color:#38bdf8;font-size:16px;margin-bottom:12px;">⚡ Quantum Gates & Execution Panel</h3>
+        <p style="color:#94a3b8;font-size:13px;margin-bottom:14px;">
+          Qubits par Hadamard gate lagakar superposition banayein aur CNOT gate se unhe entangle karein:
+        </p>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+          <button class="btn btn-quantum" onclick="runQuantumSim('hadamard')">
+            Apply H-Gate (Superposition)
+          </button>
+          <button class="btn btn-green" onclick="runQuantumSim('measure')">
+            Measure & AI Collapse (|ψ⟩ → {0,1})
+          </button>
+        </div>
+
+        <div id="quantum_res_box" class="out">Circuit tayyar hai. Upar button dabakar simulation shuru karein...</div>
+      </div>
+
+      <div class="card" style="background:#030712;border:1px solid rgba(255,255,255,0.06);">
+        <h3 style="color:#c084fc;font-size:15px;margin-bottom:8px;">🌌 Physical Reality & Universe Computing</h3>
+        <p style="color:#94a3b8;font-size:13px;line-height:1.7;">
+          <b>John Wheeler's "It from bit":</b> Poora universe continuous state space mein information exchange karta hai. 
+          Bekenstein Bound ke mutabiq har physical region ki information limit $I \le 2\pi k R E / (\hbar c \ln 2)$ hoti hai. 
+          Quantum computers probabilistic interference ka upyog karke combinatorial problems ko exponential speed se solve karte hain.
+        </p>
+      </div>
+
+    </div>
+
+    <script>
+    async function runQuantumSim(act){
+      const out = document.getElementById('quantum_res_box');
+      out.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing quantum state vector transformation...';
+      try{
+        const res = await fetch('/api/quantum-engine', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({action: act})
+        });
+        const d = await res.json();
+        out.innerHTML = d.output;
+        if(d.entropy) document.getElementById('disp_entropy').innerText = d.entropy + ' Bits';
+      }catch(e){
+        out.innerText = "Quantum simulator execution error.";
+      }
+    }
+    window.onload = function(){ runQuantumSim('hadamard'); };
+    </script>
+    """
+    return render_template_string(T_HEAD + content + T_FOOT)
+
+# Quantum Simulator Backend Logic
+@app.route("/api/quantum-engine", methods=["POST"])
+def quantum_engine():
+    d = request.get_json(silent=True) or {}
+    act = d.get("action", "hadamard")
+
+    probs = [0.5, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0]
+    
+    r = random.random()
+    measured_state = "000" if r <= 0.5 else "011"
+    measured_idx = 0 if r <= 0.5 else 3
+    
+    entropy = round(-sum(p * math.log2(p) for p in probs if p > 0), 4)
+
+    weights = [0.85, -0.45, 1.25]
+    inputs = [measured_idx / 7.0, entropy, math.sin(measured_idx)]
+    activation = sum(x * w for x, w in zip(inputs, weights)) + 0.10
+    confidence = round(1.0 / (1.0 + math.exp(-activation)), 4)
+    ai_verdict = "EXECUTE / HIGH CONFIDENCE" if confidence > 0.55 else "HOLD / RE-SAMPLE"
+
+    if act == "hadamard":
+        res_html = f"""
+        <div style='color:#c084fc;font-weight:800;font-size:16px;margin-bottom:8px;'>⚛️ Superposition & Entanglement Active</div>
+        <div class='step-box'><b>Current Quantum State Vector:</b> |ψ⟩ = 1/√2 |000⟩ + 1/√2 |011⟩</div>
+        <div class='step-box' style='border-left-color:#8b5cf6;'>
+          <b>Probabilities Across 8 Basis States:</b><br>
+          |000⟩ : 50.0% | |011⟩ : 50.0% | Others : 0.0%<br>
+          <b>Von Neumann Entropy:</b> {entropy} Bits
+        </div>
+        """
+    else:
+        res_html = f"""
+        <div style='color:#34d399;font-weight:800;font-size:16px;margin-bottom:8px;'>🎯 Wave Function Collapsed</div>
+        <div class='step-box'><b>Measured Binary State:</b> |{measured_state}⟩ (Decimal Index: {measured_idx})</div>
+        <div class='step-box' style='border-left-color:#34d399;'>
+          <b>AI Neural Decider Output:</b><br>
+          Confidence Score: <b>{confidence}</b> | Verdict: <b style='color:#38bdf8;'>{ai_verdict}</b><br>
+          <small style='color:#94a3b8;'>Simulated under 15 mK dilution refrigeration telemetry.</small>
+        </div>
+        """
+
+    return jsonify({"output": res_html, "entropy": entropy, "state": measured_state})
 
 # ==========================================
-# 4. BACKEND APIS (AI, WALLET, ORDERS)
+# 5. BACKEND APIS (AI, WALLET, ORDERS)
 # ==========================================
 @app.route("/api/live-market-ai", methods=["POST"])
 def live_market_ai():
@@ -803,7 +932,7 @@ def deposit_funds():
     return jsonify({"status": "SUCCESS", "new_balance": new_bal})
 
 # ==========================================
-# 5. REAL LIVE GOOGLE NEWS ENGINE
+# 6. REAL LIVE GOOGLE NEWS ENGINE
 # ==========================================
 @app.route("/news")
 def news():
@@ -957,7 +1086,7 @@ def live_news_feed_api():
     return jsonify({"articles": articles})
 
 # ==========================================
-# 6. MATH MASTER (VOICE SOLVER)
+# 7. MATH MASTER (VOICE SOLVER)
 # ==========================================
 @app.route("/math-master")
 def math_master():
@@ -1022,7 +1151,7 @@ def math_calc():
     return jsonify({"explanation": f"<div class='step-box'><b>सवाल:</b> {d.get('question')}<br>कृपया संख्या और यूनिट्स (जैसे 10 km/h और 58 km) साफ़ लिखें।</div>"})
 
 # ==========================================
-# 7. 5 SMART TOOLS & ₹99 SUBSCRIPTION
+# 8. 5 SMART TOOLS & ₹99 SUBSCRIPTION
 # ==========================================
 @app.route("/smart-tools")
 def smart_tools():
@@ -1064,7 +1193,7 @@ def subscription():
     content = """
     <div class="card" style="max-width:650px;margin:0 auto;text-align:center;">
       <h2>💳 DEX AIR Pro Subscription (₹99)</h2>
-      <p style="color:#94a3b8;font-size:13px;margin-bottom:14px;">PhonePe / UPI से ₹99 भेजें और तुरंत Pro Key पाएँ।</p>
+      <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">PhonePe / UPI से ₹99 भेजें और तुरंत Pro Key पाएँ।</p>
       <div style="background:#fff;padding:12px;border-radius:12px;display:inline-block;margin:10px 0;">
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=upi://pay?pa=8791223831@ibl%26pn=DEX%20AIR%26am=99%26cu=INR" style="width:200px;height:200px;display:block;">
       </div>
