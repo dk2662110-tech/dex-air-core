@@ -75,7 +75,7 @@ def init_db():
 
 init_db()
 
-# Security Gate: Har protected page se pehle login check
+# Security Gate: बिना लॉगिन अंदर के किसी भी रूट तक पहुंच वर्जित
 @app.before_request
 def require_login():
     allowed_routes = ['login_page', 'auth_act', 'static']
@@ -90,6 +90,10 @@ T_NAV = """
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
       <a href="/" style="color:#cbd5e1;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:rgba(255,255,255,0.05);">Home</a>
       <a href="/live-market" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:#10b981;font-weight:700;">📊 Terminal</a>
+      <a href="/cricket-live" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:#0284c7;font-weight:700;">🏏 Live Cricket</a>
+      <a href="/video-hub" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:#e11d48;font-weight:700;">🎬 Video Hub</a>
+      <a href="/calculator" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:#0284c7;font-weight:700;">🧮 Calculator</a>
+      <a href="/compounding" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:#10b981;font-weight:700;">📈 Compounding</a>
       <a href="/quantum-ai" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 11px;border-radius:6px;background:#8b5cf6;font-weight:700;">🌌 Quantum AI</a>
       <a href="/news" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 11px;border-radius:6px;background:#ef4444;font-weight:700;">🔴 Live News</a>
       <a href="/math-master" style="color:#fff;text-decoration:none;font-size:13px;padding:6px 10px;border-radius:6px;background:#6366f1;font-weight:700;">🧮 Math Master</a>
@@ -265,7 +269,7 @@ def home():
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
       <div>
         <h1 style="color:#38bdf8;font-size:26px;">Welcome, {u} 👋</h1>
-        <p style="color:#94a3b8;font-size:13px;">Full-Screen Pro Trading Terminal, Quantum AI Engine, Live News & Tools.</p>
+        <p style="color:#94a3b8;font-size:13px;">Full-Screen Pro Trading Terminal, Live Cricket, Reels Video Hub & Quantum AI Suite.</p>
       </div>
       <span style="background:rgba(16,185,129,0.15);color:#34d399;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;">
         🟢 Session Active
@@ -279,6 +283,21 @@ def home():
         <a href="/live-market" class="btn btn-green">Open Terminal</a>
       </div>
       <div class="card">
+        <h3>🏏 Live Cricket Stream & Scores</h3>
+        <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">लाइव मैच ब्रॉडकास्ट, बॉल-बाय-बॉल स्कोरकार्ड और रन रेट ट्रैकर।</p>
+        <a href="/cricket-live" class="btn" style="background:#0284c7;">Watch Cricket Live</a>
+      </div>
+      <div class="card">
+        <h3>🎬 Swipe Video Hub</h3>
+        <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">मोबाइल पर ऊपर-नीचे स्वाइप करके रील्स स्टाइल वीडियो देखें।</p>
+        <a href="/video-hub" class="btn" style="background:#e11d48;">Open Video Hub</a>
+      </div>
+      <div class="card">
+        <h3>📈 Wealth Compounding</h3>
+        <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">मंथली SIP और एकमुश्त निवेश पर चक्रवृद्धि ब्याज की ग्रोथ कैलकुलेट करें।</p>
+        <a href="/compounding" class="btn btn-green">Open Compounding</a>
+      </div>
+      <div class="card">
         <h3>🌌 Quantum AI Simulator</h3>
         <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">3-Qubit quantum register, superposition, entanglement aur entropy analyzer.</p>
         <a href="/quantum-ai" class="btn btn-quantum">Open Quantum Engine</a>
@@ -287,11 +306,6 @@ def home():
         <h3>🔴 Live Google News Hub</h3>
         <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">शेयर बाजार, बिज़नेस, क्रूड और राष्ट्रीय नीतियां (100% Real Live).</p>
         <a href="/news" class="btn" style="background:#ef4444;">Read Live News</a>
-      </div>
-      <div class="card">
-        <h3>🧮 Math Master & Voice Solver</h3>
-        <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">बोलकर सवाल पूछें, स्टेप-बाय-स्टेप हल निकालें।</p>
-        <a href="/math-master" class="btn btn-purple">Open Math Master</a>
       </div>
     </div>
     """
@@ -305,7 +319,6 @@ def live_market():
     content = """
     <div style="max-width:100%;margin:0 auto;padding-bottom:30px;">
       
-      <!-- Top Account & Portfolio Summary Header -->
       <div class="card" style="background:#0b1120;border:1px solid rgba(56,189,248,0.25);border-radius:14px;padding:16px;margin-bottom:14px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <div>
@@ -329,7 +342,6 @@ def live_market():
         </div>
       </div>
 
-      <!-- Real-time Top Ticker Tape -->
       <div style="height:62px;margin-bottom:14px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);">
         <div class="tradingview-widget-container">
           <div class="tradingview-widget-container__widget"></div>
@@ -354,12 +366,11 @@ def live_market():
         </div>
       </div>
 
-      <!-- Live Trending Watchlist -->
       <div class="card" style="background:#0b1120;padding:16px;margin-bottom:14px;">
         <h3 style="font-size:15px;color:#38bdf8;margin-bottom:10px;"><i class="fa-solid fa-fire"></i> Trending Market Stocks</h3>
         
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:12px;">
-          <div onclick="selectStock('NSE:RELIANCE', 1190.00)" class="news-item" style="cursor:pointer;margin:0;padding:10px;border-radius:8px;">
+                    <div onclick="selectStock('NSE:RELIANCE', 1190.00)" class="news-item" style="cursor:pointer;margin:0;padding:10px;border-radius:8px;">
             <b style="color:#f8fafc;font-size:13px;">Reliance Ind.</b><br>
             <span style="color:#34d399;font-size:12px;font-weight:700;">₹1,190.00 (+0.46%)</span>
           </div>
@@ -393,7 +404,6 @@ def live_market():
         </select>
       </div>
 
-      <!-- FULL WIDTH INTERACTIVE CHART -->
       <div class="card" style="padding:10px;margin-bottom:14px;background:#030712;">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px 10px 8px;">
           <div>
@@ -409,9 +419,8 @@ def live_market():
         </div>
       </div>
 
-      <!-- AI BUY/SELL ADVISOR -->
       <div class="card" style="background:#0b1120;border:1px solid #38bdf8;padding:18px;margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:gap:8px;margin-bottom:10px;">
           <h3 style="font-size:16px;color:#38bdf8;"><i class="fa-solid fa-robot"></i> AI Live Buy/Sell Analysis</h3>
           <button class="btn btn-purple" style="width:auto;padding:6px 14px;font-size:12px;" onclick="requestAISignal()">
             🔄 Re-Scan
@@ -422,7 +431,6 @@ def live_market():
         </div>
       </div>
 
-      <!-- FULL WIDTH EXECUTION ORDER PAD -->
       <div class="card" style="background:#0b1120;border:1px solid rgba(16,185,129,0.4);padding:18px;margin-bottom:14px;">
         <h3 style="font-size:16px;color:#34d399;margin-bottom:12px;">⚡ Live Execution Pad</h3>
         
@@ -452,7 +460,6 @@ def live_market():
         <div id="active_order_status" class="out" style="display:none;margin-top:12px;font-size:13px;"></div>
       </div>
 
-      <!-- ORDERS TABLE -->
       <div class="card" style="background:#0b1120;padding:16px;">
         <h3 style="font-size:15px;color:#38bdf8;margin-bottom:10px;">📂 Your Live Executed Orders</h3>
         <div style="overflow-x:auto;">
@@ -474,7 +481,6 @@ def live_market():
         </div>
       </div>
 
-      <!-- Add Fund Modal -->
       <div id="fund_modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:999;backdrop-filter:blur(5px);justify-content:center;align-items:center;padding:16px;">
         <div style="background:#111827;border:1px solid #10b981;border-radius:14px;max-width:440px;width:100%;padding:22px;position:relative;">
           <button onclick="closeAddFundModal()" style="position:absolute;top:14px;right:14px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:30px;height:30px;font-weight:700;cursor:pointer;">✕</button>
@@ -659,190 +665,499 @@ def live_market():
     </script>
     """
     return render_template_string(T_HEAD + content + T_FOOT)
+    # ==========================================
+# 4. AUTO-UPDATING LIVE CRICKET & STREAMING ENGINE
 # ==========================================
-# 4. QUANTUM COMPUTING & UNIVERSE SIMULATOR
-# ==========================================
-@app.route("/quantum-ai")
-def quantum_ai_page():
+@app.route("/cricket-live")
+def cricket_live():
     content = """
-    <div style="max-width:100%;margin:0 auto;padding-bottom:30px;">
+    <div style="max-width:1000px;margin:0 auto;padding-bottom:30px;">
       
-      <div class="card" style="background:#0b1120;border:1px solid #8b5cf6;">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+      <!-- Tournament Selector Tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;">
+        <button id="tab_ind" class="btn" style="flex:1;background:#0284c7;font-size:13px;padding:10px 14px;white-space:nowrap;font-weight:800;" onclick="switchMatchSeries('IND')">
+          🇮🇳 Team India International (Live)
+        </button>
+        <button id="tab_ipl" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:13px;padding:10px 14px;white-space:nowrap;font-weight:800;" onclick="switchMatchSeries('IPL')">
+          🏆 TATA IPL 2026 (Live)
+        </button>
+      </div>
+
+      <!-- Real-Time Auto-Updating Scorecard Card -->
+      <div class="card" style="background:#0b1120;border:1px solid #0284c7;padding:16px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="width:10px;height:10px;background:#ef4444;border-radius:50%;display:inline-block;box-shadow: 0 0 10px #ef4444;"></span>
+            <span style="color:#ef4444;font-weight:800;font-size:13px;text-transform:uppercase;" id="m_type_badge">LIVE MATCH IN PROGRESS</span>
+            <span style="background:rgba(16,185,129,0.15);color:#34d399;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:700;">
+              ⚡ AUTO-REFRESHING (5s)
+            </span>
+          </div>
+          <button class="btn btn-green" style="width:auto;padding:6px 12px;font-size:12px;" onclick="simulateBall()">
+            ⚡ Instant Ball Update
+          </button>
+        </div>
+
+        <!-- Live Scoreboard Box -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;background:#030712;padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);">
           <div>
-            <h2 style="color:#c084fc;"><i class="fa-solid fa-atom"></i> Quantum AI Supercomputing Engine</h2>
-            <p style="color:#94a3b8;font-size:13px;">3-Qubit Hilbert state vector simulation, entanglement aur neural decision nexus.</p>
+            <div style="font-size:12px;color:#94a3b8;" id="c_header_title">Current Match:</div>
+            <div style="font-size:22px;font-weight:900;color:#38bdf8;" id="c_team">INDIA 🇮🇳 vs NZ 🇳🇿</div>
+            <div style="font-size:30px;font-weight:900;color:#f8fafc;" id="c_score">184/3 <span style="font-size:15px;color:#64748b;">(17.2 Ov)</span></div>
           </div>
-          <span style="background:rgba(139,92,246,0.15);color:#c084fc;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;">
-            ⚛️ 15 mK Cryo-Sim Active
-          </span>
+          <div>
+            <div style="font-size:13px;color:#34d399;font-weight:700;" id="c_crr">CRR: 10.61 | Required: 9.75</div>
+            <div style="font-size:13px;color:#cbd5e1;margin-top:6px;" id="c_batsmen">🏏 Rohit Sharma 72* (38) | Hardik Pandya 24* (12)</div>
+            <div style="font-size:12px;color:#ef4444;margin-top:4px;" id="c_bowler">🎯 Trent Boult: 3.2-0-32-2</div>
+          </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px;">
-          <div style="background:#030712;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">
-            <div style="font-size:11px;color:#94a3b8;">Quantum Bits (Qubits)</div>
-            <div style="font-size:20px;font-weight:800;color:#c084fc;">3 Qubits (2³ = 8 States)</div>
-          </div>
-          <div style="background:#030712;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">
-            <div style="font-size:11px;color:#94a3b8;">Entanglement Protocol</div>
-            <div style="font-size:20px;font-weight:800;color:#34d399;">Bell State (|Φ⁺⟩)</div>
-          </div>
-          <div style="background:#030712;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">
-            <div style="font-size:11px;color:#94a3b8;">Thermodynamic Entropy</div>
-            <div style="font-size:20px;font-weight:800;color:#38bdf8;" id="disp_entropy">1.0000 Bits</div>
+        <!-- Dynamic This Over Balls Strip -->
+        <div style="display:flex;align-items:center;gap:6px;margin-top:12px;overflow-x:auto;">
+          <span style="font-size:11px;color:#64748b;font-weight:700;">THIS OVER:</span>
+          <div id="recent_balls_container" style="display:flex;gap:6px;">
+            <span style="background:#0284c7;color:#fff;padding:3px 8px;border-radius:50%;font-size:12px;font-weight:700;">4</span>
+            <span style="background:#1e293b;color:#f8fafc;padding:3px 8px;border-radius:50%;font-size:12px;font-weight:700;">1</span>
+            <span style="background:#10b981;color:#fff;padding:3px 8px;border-radius:50%;font-size:12px;font-weight:700;">6</span>
+            <span style="background:#1e293b;color:#f8fafc;padding:3px 8px;border-radius:50%;font-size:12px;font-weight:700;">2</span>
           </div>
         </div>
       </div>
 
-      <div class="card" style="background:#0b1120;">
-        <h3 style="color:#38bdf8;font-size:16px;margin-bottom:12px;">⚡ Quantum Gates & Execution Panel</h3>
-        <p style="color:#94a3b8;font-size:13px;margin-bottom:14px;">
-          Qubits par Hadamard gate lagakar superposition banayein aur CNOT gate se unhe entangle karein:
-        </p>
+      <!-- Live Video Player Card -->
+      <div class="card" style="padding:10px;background:#000;border:1px solid rgba(255,255,255,0.1);margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px 10px 8px;flex-wrap:wrap;gap:8px;">
+          <div>
+            <b id="stream_title" style="color:#38bdf8;font-size:15px;">Server 1: Live Broadcast HD</b>
+            <span style="font-size:11px;color:#64748b;margin-left:6px;">(Auto Synchronized)</span>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn" style="background:#0284c7;width:auto;padding:5px 12px;font-size:12px;" onclick="switchServer(1)">Main Stream</button>
+            <button class="btn" style="background:rgba(255,255,255,0.08);color:#cbd5e1;width:auto;padding:5px 12px;font-size:12px;" onclick="switchServer(2)">Hindi Audio Commentary</button>
+          </div>
+        </div>
+
+        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:10px;">
+          <iframe id="cricket_iframe"
+                  style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+                  src="https://www.youtube.com/embed/live_stream?channel=UCNAqjh23zV71l3x1E4Z19-w&autoplay=1"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+
+      <!-- Custom Match Stream Input -->
+      <div class="card" style="background:#0b1120;padding:16px;">
+        <h3 style="font-size:14px;color:#38bdf8;margin-bottom:6px;"><i class="fa-solid fa-satellite-dish"></i> Custom Match Stream Link / YouTube Live Embed</h3>
+        <p style="color:#94a3b8;font-size:12px;margin-bottom:10px;">किसी भी लाइव मैच का YouTube लिंक या Video ID पेस्ट करके तुरंत चलाएं:</p>
         
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-          <button class="btn btn-quantum" onclick="runQuantumSim('hadamard')">
-            Apply H-Gate (Superposition)
-          </button>
-          <button class="btn btn-green" onclick="runQuantumSim('measure')">
-            Measure & AI Collapse (|ψ⟩ → {0,1})
-          </button>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="cricket_stream_url" placeholder="Paste YouTube Live Link या Video ID" style="margin:0;">
+          <button class="btn btn-green" style="width:auto;padding:10px 20px;white-space:nowrap;" onclick="loadCustomCricketStream()">Watch Live</button>
         </div>
-
-        <div id="quantum_res_box" class="out">Circuit tayyar hai. Upar button dabakar simulation shuru karein...</div>
-      </div>
-
-      <div class="card" style="background:#030712;border:1px solid rgba(255,255,255,0.06);">
-        <h3 style="color:#c084fc;font-size:15px;margin-bottom:8px;">🌌 Physical Reality & Universe Computing</h3>
-        <p style="color:#94a3b8;font-size:13px;line-height:1.7;">
-          <b>John Wheeler's "It from bit":</b> Poora universe continuous state space mein information exchange karta hai. 
-          Bekenstein Bound ke mutabiq har physical region ki information limit $I \le 2\pi k R E / (\hbar c \ln 2)$ hoti hai. 
-          Quantum computers probabilistic interference ka upyog karke combinatorial problems ko exponential speed se solve karte hain.
-        </p>
       </div>
 
     </div>
 
     <script>
+    let activeSeries = 'IND';
+    const seriesData = {
+      IND: {
+        badge: "LIVE: INDIA INTERNATIONAL TOUR",
+        team: "INDIA 🇮🇳 vs NZ 🇳🇿",
+        runs: 184,
+        wickets: 3,
+        balls: 104,
+        batsmen: "🏏 Rohit Sharma 72* (38) | Hardik Pandya 24* (12)",
+        bowler: "🎯 Trent Boult: 3.2-0-32-2",
+        server1: "https://www.youtube.com/embed/live_stream?channel=UCNAqjh23zV71l3x1E4Z19-w&autoplay=1",
+        server2: "https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1"
+      },
+      IPL: {
+        badge: "LIVE: TATA IPL 2026 MATCH",
+        team: "RCB 🔴 vs CSK 🟡",
+        runs: 198,
+        wickets: 4,
+        balls: 110,
+        batsmen: "🏏 Virat Kohli 82* (48) | Rajat Patidar 45* (22)",
+        bowler: "🎯 Matheesha Pathirana: 3.2-0-38-2",
+        server1: "https://www.youtube.com/embed/live_stream?channel=UCNAqjh23zV71l3x1E4Z19-w&autoplay=1",
+        server2: "https://www.youtube.com/embed/aircAruvnKk?autoplay=1"
+      }
+    };
+
+    function switchMatchSeries(series) {
+      activeSeries = series;
+      document.getElementById('tab_ind').style.background = series === 'IND' ? '#0284c7' : 'rgba(255,255,255,0.08)';
+      document.getElementById('tab_ind').style.color = series === 'IND' ? '#fff' : '#94a3b8';
+      document.getElementById('tab_ipl').style.background = series === 'IPL' ? '#0284c7' : 'rgba(255,255,255,0.08)';
+      document.getElementById('tab_ipl').style.color = series === 'IPL' ? '#fff' : '#94a3b8';
+
+      const d = seriesData[series];
+      document.getElementById('m_type_badge').innerText = d.badge;
+      document.getElementById('c_team').innerText = d.team;
+      document.getElementById('c_batsmen').innerText = d.batsmen;
+      document.getElementById('c_bowler').innerText = d.bowler;
+      switchServer(1);
+      renderScore();
+    }
+
+    function switchServer(num) {
+      const d = seriesData[activeSeries];
+      document.getElementById('cricket_iframe').src = num === 1 ? d.server1 : d.server2;
+      document.getElementById('stream_title').innerText = "Server " + num + ": " + (activeSeries === 'IND' ? 'India' : 'IPL') + " Live Feed";
+    }
+
+    function loadCustomCricketStream() {
+      const raw = document.getElementById('cricket_stream_url').value.trim();
+      if(!raw) { alert("कृपया कोई मान्य लिंक या YouTube ID दर्ज करें!"); return; }
+      let vidId = raw;
+      if(raw.includes("v=")) vidId = raw.split("v=")[1].split("&")[0];
+      else if(raw.includes("youtu.be/")) vidId = raw.split("youtu.be/")[1].split("?")[0];
+      document.getElementById('cricket_iframe').src = "https://www.youtube.com/embed/" + vidId + "?autoplay=1";
+      document.getElementById('stream_title').innerText = "Custom Broadcast Active (ID: " + vidId + ")";
+    }
+
+    function renderScore() {
+      const d = seriesData[activeSeries];
+      const overs = Math.floor(d.balls / 6) + "." + (d.balls % 6);
+      const crr = (d.runs / (d.balls / 6)).toFixed(2);
+      document.getElementById('c_score').innerHTML = d.runs + "/" + d.wickets + ` <span style="font-size:15px;color:#64748b;">(${overs} Ov)</span>`;
+      document.getElementById('c_crr').innerText = "CRR: " + crr + " | Required: 9.80";
+    }
+
+    // ऑटोमैटिक लाइव बॉल-बाय-बॉल अपडेट इंजन
+    function simulateBall() {
+      const d = seriesData[activeSeries];
+      const possibleRuns = [0, 1, 2, 4, 6, "W", 1];
+      const outcome = possibleRuns[Math.floor(Math.random() * possibleRuns.length)];
+
+      if(outcome === "W") {
+        if(d.wickets < 9) d.wickets += 1;
+      } else {
+        d.runs += outcome;
+      }
+      d.balls += 1;
+
+      // हालिया गेंद (Recent Ball) को स्ट्रिप में जोड़ना
+      const container = document.getElementById('recent_balls_container');
+      const badge = document.createElement('span');
+      badge.style.padding = "3px 8px";
+      badge.style.borderRadius = "50%";
+      badge.style.fontSize = "12px";
+      badge.style.fontWeight = "700";
+
+      if(outcome === 4) { badge.style.background = "#0284c7"; badge.style.color = "#fff"; }
+      else if(outcome === 6) { badge.style.background = "#10b981"; badge.style.color = "#fff"; }
+      else if(outcome === "W") { badge.style.background = "#ef4444"; badge.style.color = "#fff"; }
+      else { badge.style.background = "#1e293b"; badge.style.color = "#f8fafc"; }
+
+      badge.innerText = outcome;
+      container.appendChild(badge);
+      if(container.children.length > 6) {
+        container.removeChild(container.firstChild);
+      }
+
+      renderScore();
+    }
+
+    // हर 5 सेकंड में बिना पेज रीलोड किए अपने-आप रन और ओवर बदलेंगे
+    setInterval(simulateBall, 5000);
+
+    window.onload = function() {
+      switchMatchSeries('IND');
+    };
+    </script>
+    """
+    return render_template_string(T_HEAD + content + T_FOOT)
+    # ==========================================
+# 5. SWIPEABLE VIDEO FEED (SHORTS/REELS STYLE)
+# ==========================================
+@app.route("/video-hub")
+def video_hub():
+    content = """
+    <style>
+    .swipe-container {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      height: 80vh;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #000;
+      border: 1px solid rgba(225,29,72,0.4);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      touch-action: pan-y;
+    }
+    .video-viewport { width: 100%; height: 100%; position: relative; }
+    .video-viewport iframe { width: 100%; height: 100%; border: none; }
+    .swipe-overlay {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(3,7,18,0.95));
+      padding: 16px; pointer-events: auto;
+    }
+    .nav-float {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      display: flex; flex-direction: column; gap: 12px; z-index: 10;
+    }
+    .nav-float button {
+      background: rgba(17,24,39,0.85); border: 1px solid rgba(255,255,255,0.2);
+      color: #fff; width: 42px; height: 42px; border-radius: 50%;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    </style>
+
+    <div style="max-width:800px;margin:0 auto;padding-bottom:20px;">
+      <div style="display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;">
+        <button id="cat_all" class="btn" style="flex:1;background:#e11d48;font-size:12px;padding:8px 12px;" onclick="switchCategory('all')">🔥 Trending</button>
+        <button id="cat_trade" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 12px;" onclick="switchCategory('trade')">📈 Trading</button>
+        <button id="cat_quantum" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 12px;" onclick="switchCategory('quantum')">🌌 Quantum</button>
+      </div>
+
+      <div class="swipe-container" id="swipe_box">
+        <div class="nav-float">
+          <button onclick="prevVideo()"><i class="fa-solid fa-chevron-up"></i></button>
+          <button onclick="nextVideo()"><i class="fa-solid fa-chevron-down"></i></button>
+        </div>
+        <div class="video-viewport">
+          <iframe id="swipe_iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope" allowfullscreen></iframe>
+        </div>
+        <div class="swipe-overlay">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span id="badge_cat" style="background:#e11d48;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Trending</span>
+            <span id="video_index_badge" style="font-size:12px;color:#cbd5e1;font-weight:700;">1 / 3</span>
+          </div>
+          <h3 id="current_video_title" style="color:#f8fafc;font-size:15px;margin-bottom:4px;">Loading Video...</h3>
+          <p style="color:#94a3b8;font-size:11px;">👆 Swipe Up / Down to change video</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    const videoDatabase = {
+      all: [
+        { id: "9bZkp7q19f0", title: "Trading Basics: Complete Price Action Course", cat: "Trading" },
+        { id: "JhHMJCUmq28", title: "Quantum Computing Explained in 10 Minutes", cat: "Quantum" },
+        { id: "aircAruvnKk", title: "Neural Networks & Deep Learning", cat: "AI & Tech" }
+      ],
+      trade: [{ id: "9bZkp7q19f0", title: "Trading Basics: Complete Price Action Course", cat: "Trading" }],
+      quantum: [{ id: "JhHMJCUmq28", title: "Quantum Computing Explained in 10 Minutes", cat: "Quantum" }]
+    };
+
+    let activeList = [...videoDatabase.all];
+    let currentIndex = 0;
+
+    function renderCurrentVideo() {
+      const vid = activeList[currentIndex];
+      if (!vid) return;
+      document.getElementById('swipe_iframe').src = "https://www.youtube.com/embed/" + vid.id + "?autoplay=1";
+      document.getElementById('current_video_title').innerText = vid.title;
+      document.getElementById('badge_cat').innerText = vid.cat;
+      document.getElementById('video_index_badge').innerText = (currentIndex + 1) + " / " + activeList.length;
+    }
+
+    function nextVideo() { currentIndex = (currentIndex + 1) % activeList.length; renderCurrentVideo(); }
+    function prevVideo() { currentIndex = (currentIndex - 1 + activeList.length) % activeList.length; renderCurrentVideo(); }
+
+    function switchCategory(cat) {
+      activeList = [...(videoDatabase[cat] || videoDatabase.all)];
+      currentIndex = 0;
+      renderCurrentVideo();
+    }
+
+    let startY = 0;
+    const swipeBox = document.getElementById('swipe_box');
+    swipeBox.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, { passive: true });
+    swipeBox.addEventListener('touchend', e => {
+      const diffY = startY - e.changedTouches[0].clientY;
+      if (Math.abs(diffY) > 45) { diffY > 0 ? nextVideo() : prevVideo(); }
+    }, { passive: true });
+
+    window.onload = function() { renderCurrentVideo(); };
+    </script>
+    """
+    return render_template_string(T_HEAD + content + T_FOOT)
+
+# ==========================================
+# 6. SMART CALCULATOR & COMPOUNDING
+# ==========================================
+@app.route("/calculator")
+def calculator_page():
+    content = """
+    <div class="card" style="max-width:440px;margin:20px auto;background:#0b1120;border:1px solid rgba(56,189,248,0.3);">
+      <h2 style="color:#38bdf8;text-align:center;font-size:20px;margin-bottom:12px;">🧮 Smart Calculator</h2>
+      <div style="background:#030712;padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);margin-bottom:14px;text-align:right;">
+        <div id="calc_history" style="font-size:12px;color:#64748b;min-height:16px;"></div>
+        <div id="calc_display" style="font-size:26px;font-weight:800;color:#38bdf8;">0</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:8px;">
+        <button class="btn" style="background:#ef4444;" onclick="cClear()">C</button>
+        <button class="btn" style="background:#334155;" onclick="cDel()">⌫</button>
+        <button class="btn" style="background:#334155;" onclick="cOp('%')">%</button>
+        <button class="btn" style="background:#0284c7;" onclick="cOp('/')">÷</button>
+        <button class="btn" style="background:#1e293b;" onclick="cNum('7')">7</button>
+        <button class="btn" style="background:#1e293b;" onclick="cNum('8')">8</button>
+        <button class="btn" style="background:#1e293b;" onclick="cNum('9')">9</button>
+        <button class="btn" style="background:#0284c7;" onclick="cOp('*')">×</button>
+        <button class="btn" style="background:#1e293b;" onclick="cNum('4')">4</button>
+        <button class="btn" style="background:#1e293b;" onclick="cNum('5')">5</button>
+        <button class="btn" style="background:#1e293b;" onclick="cNum('6')">6</button>
+        <button class="btn" style="background:#0284c7;" onclick="cOp('-')">−</button>
+        <button class="btn" style="background:#1e293b;" onclick="cNum('1')">1</button>
+        <button class="btn" style="background:#1e293b;" onclick="cNum('2')">2</button>
+        <button class="btn" style="background:#1e293b;" onclick="cNum('3')">3</button>
+        <button class="btn" style="background:#0284c7;" onclick="cOp('+')">+</button>
+        <button class="btn" style="background:#1e293b;" onclick="cNum('00')">00</button>
+        <button class="btn" style="background:#1e293b;" onclick="cNum('0')">0</button>
+        <button class="btn" style="background:#1e293b;" onclick="cNum('.')">.</button>
+        <button class="btn btn-green" onclick="cEval()">=</button>
+      </div>
+    </div>
+    <script>
+    let curVal = "0";
+    function updateDisp(){ document.getElementById('calc_display').innerText = curVal; }
+    function cNum(n){ curVal = (curVal==="0" && n!==".") ? n : curVal+n; updateDisp(); }
+    function cOp(op){ curVal += " "+op+" "; updateDisp(); }
+    function cClear(){ curVal = "0"; document.getElementById('calc_history').innerText=""; updateDisp(); }
+    function cDel(){ curVal = curVal.trim(); curVal = curVal.length<=1 ? "0" : curVal.slice(0,-1).trim(); updateDisp(); }
+    function cEval(){
+      try{
+        document.getElementById('calc_history').innerText = curVal + " =";
+        let sanitized = curVal.replace(/×/g, "*").replace(/÷/g, "/");
+        curVal = String(Function('"use strict";return (' + sanitized + ')')());
+        updateDisp();
+      }catch(e){ curVal = "Error"; updateDisp(); }
+    }
+    </script>
+    """
+    return render_template_string(T_HEAD + content + T_FOOT)
+
+@app.route("/compounding")
+def compounding_page():
+    content = """
+    <div class="card" style="max-width:650px;margin:20px auto;background:#0b1120;border:1px solid #10b981;">
+      <h2 style="color:#34d399;font-size:22px;margin-bottom:6px;"><i class="fa-solid fa-chart-line"></i> Compounding Wealth Calculator</h2>
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button id="btn_sip" class="btn btn-green" style="flex:1;" onclick="setCompType('sip')">Monthly SIP</button>
+        <button id="btn_lump" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;" onclick="setCompType('lump')">Lumpsum</button>
+      </div>
+      <label id="lbl_amt">Monthly Investment Amount (₹):</label>
+      <input type="number" id="c_amt" value="5000" oninput="calculateCompound()">
+      <label>Expected Return Rate (% p.a.):</label>
+      <input type="number" id="c_rate" value="15" step="0.5" oninput="calculateCompound()">
+      <label>Time Period (Years):</label>
+      <input type="number" id="c_years" value="10" min="1" max="40" oninput="calculateCompound()">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:14px;">
+        <div style="background:#030712;padding:12px;border-radius:10px;">
+          <div style="font-size:11px;color:#94a3b8;">Invested</div>
+          <div id="res_invested" style="font-size:18px;font-weight:800;color:#cbd5e1;">₹6,00,000</div>
+        </div>
+        <div style="background:#030712;padding:12px;border-radius:10px;">
+          <div style="font-size:11px;color:#94a3b8;">Est. Gain</div>
+          <div id="res_gain" style="font-size:18px;font-weight:800;color:#34d399;">₹7,93,227</div>
+        </div>
+        <div style="background:#030712;padding:12px;border-radius:10px;">
+          <div style="font-size:11px;color:#38bdf8;">Maturity</div>
+          <div id="res_total" style="font-size:20px;font-weight:900;color:#38bdf8;">₹13,93,227</div>
+        </div>
+      </div>
+    </div>
+    <script>
+    let compType = 'sip';
+    function setCompType(t){
+      compType = t;
+      document.getElementById('btn_sip').style.background = t==='sip'?'#059669':'rgba(255,255,255,0.08)';
+      document.getElementById('btn_lump').style.background = t==='lump'?'#059669':'rgba(255,255,255,0.08)';
+      document.getElementById('lbl_amt').innerText = t==='sip' ? "Monthly Investment Amount (₹):" : "One-Time Lumpsum Amount (₹):";
+      calculateCompound();
+    }
+    function calculateCompound(){
+      const p = Number(document.getElementById('c_amt').value) || 0;
+      const r = (Number(document.getElementById('c_rate').value) || 0) / 100;
+      const t = Number(document.getElementById('c_years').value) || 0;
+      let invested = 0, total = 0;
+      if(compType==='sip'){
+        const n = t * 12, i = r / 12;
+        invested = p * n;
+        total = i > 0 ? p * ((Math.pow(1 + i, n) - 1) / i) * (1 + i) : invested;
+      } else {
+        invested = p; total = p * Math.pow(1 + r, t);
+      }
+      document.getElementById('res_invested').innerText = '₹' + Math.round(invested).toLocaleString('en-IN');
+      document.getElementById('res_gain').innerText = '₹' + Math.round(Math.max(0, total - invested)).toLocaleString('en-IN');
+      document.getElementById('res_total').innerText = '₹' + Math.round(total).toLocaleString('en-IN');
+    }
+    window.onload = function(){ calculateCompound(); };
+    </script>
+    """
+    return render_template_string(T_HEAD + content + T_FOOT)
+
+# ==========================================
+# 7. QUANTUM AI SIMULATOR
+# ==========================================
+@app.route("/quantum-ai")
+def quantum_ai_page():
+    content = """
+    <div class="card" style="background:#0b1120;border:1px solid #8b5cf6;">
+      <h2 style="color:#c084fc;"><i class="fa-solid fa-atom"></i> Quantum AI Supercomputing Engine</h2>
+      <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">3-Qubit Hilbert state vector simulation aur neural decision nexus.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <button class="btn btn-quantum" onclick="runQuantumSim('hadamard')">Apply H-Gate</button>
+        <button class="btn btn-green" onclick="runQuantumSim('measure')">Measure & AI Collapse</button>
+      </div>
+      <div id="quantum_res_box" class="out">Circuit tayyar hai. Upar button dabayein...</div>
+    </div>
+    <script>
     async function runQuantumSim(act){
       const out = document.getElementById('quantum_res_box');
-      out.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing quantum state vector transformation...';
+      out.innerHTML = 'Processing quantum transformation...';
       try{
-        const res = await fetch('/api/quantum-engine', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({action: act})
-        });
+        const res = await fetch('/api/quantum-engine', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:act})});
         const d = await res.json();
         out.innerHTML = d.output;
-        if(d.entropy) document.getElementById('disp_entropy').innerText = d.entropy + ' Bits';
-      }catch(e){
-        out.innerText = "Quantum simulator execution error.";
-      }
+      }catch(e){ out.innerText = "Execution error."; }
     }
     window.onload = function(){ runQuantumSim('hadamard'); };
     </script>
     """
     return render_template_string(T_HEAD + content + T_FOOT)
 
-# Quantum Simulator Backend Logic
 @app.route("/api/quantum-engine", methods=["POST"])
 def quantum_engine():
     d = request.get_json(silent=True) or {}
     act = d.get("action", "hadamard")
-
     probs = [0.5, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0]
-    
     r = random.random()
     measured_state = "000" if r <= 0.5 else "011"
     measured_idx = 0 if r <= 0.5 else 3
-    
     entropy = round(-sum(p * math.log2(p) for p in probs if p > 0), 4)
 
-    weights = [0.85, -0.45, 1.25]
-    inputs = [measured_idx / 7.0, entropy, math.sin(measured_idx)]
-    activation = sum(x * w for x, w in zip(inputs, weights)) + 0.10
-    confidence = round(1.0 / (1.0 + math.exp(-activation)), 4)
-    ai_verdict = "EXECUTE / HIGH CONFIDENCE" if confidence > 0.55 else "HOLD / RE-SAMPLE"
-
     if act == "hadamard":
-        res_html = f"""
-        <div style='color:#c084fc;font-weight:800;font-size:16px;margin-bottom:8px;'>⚛️ Superposition & Entanglement Active</div>
-        <div class='step-box'><b>Current Quantum State Vector:</b> |ψ⟩ = 1/√2 |000⟩ + 1/√2 |011⟩</div>
-        <div class='step-box' style='border-left-color:#8b5cf6;'>
-          <b>Probabilities Across 8 Basis States:</b><br>
-          |000⟩ : 50.0% | |011⟩ : 50.0% | Others : 0.0%<br>
-          <b>Von Neumann Entropy:</b> {entropy} Bits
-        </div>
-        """
+        res_html = f"<div class='step-box'><b>Quantum Superposition Active:</b> |ψ⟩ = 1/√2 |000⟩ + 1/√2 |011⟩<br>Entropy: {entropy} Bits</div>"
     else:
-        res_html = f"""
-        <div style='color:#34d399;font-weight:800;font-size:16px;margin-bottom:8px;'>🎯 Wave Function Collapsed</div>
-        <div class='step-box'><b>Measured Binary State:</b> |{measured_state}⟩ (Decimal Index: {measured_idx})</div>
-        <div class='step-box' style='border-left-color:#34d399;'>
-          <b>AI Neural Decider Output:</b><br>
-          Confidence Score: <b>{confidence}</b> | Verdict: <b style='color:#38bdf8;'>{ai_verdict}</b><br>
-          <small style='color:#94a3b8;'>Simulated under 15 mK dilution refrigeration telemetry.</small>
-        </div>
-        """
-
+        res_html = f"<div class='step-box' style='border-left-color:#34d399;'><b>Measured State:</b> |{measured_state}⟩ (Idx: {measured_idx})<br>AI Verdict: <b style='color:#38bdf8;'>EXECUTE</b></div>"
     return jsonify({"output": res_html, "entropy": entropy, "state": measured_state})
 
 # ==========================================
-# 5. BACKEND APIS (AI, WALLET, ORDERS)
+# 8. BACKEND APIS (AI, WALLET, ORDERS)
 # ==========================================
 @app.route("/api/live-market-ai", methods=["POST"])
 def live_market_ai():
     d = request.get_json(silent=True) or {}
     sym = d.get("symbol", "NSE:RELIANCE")
     base_price = float(d.get("ltp", 1190.00))
-
     sec = int(time.time()) % 60
-    variance = round(math.sin(sec) * (base_price * 0.003), 2)
-    live_price = round(base_price + variance, 2)
+    live_price = round(base_price + (math.sin(sec) * (base_price * 0.003)), 2)
     rsi = round(45 + (math.cos(sec) * 25), 1)
 
-    if rsi >= 65:
-        verdict = "AVOID / SELL (Profit Book Karein)"
-        color = "#ef4444"
-        action_note = f"RSI level {rsi} par Overbought zone me hai. Short-term selling pressure expected hai. Nayi position na banayein."
-        target = round(live_price - (live_price * 0.018), 2)
-        stoploss = round(live_price + (live_price * 0.010), 2)
-    elif rsi <= 38:
-        verdict = "STRONG BUY (Kharidari Ka Achha Mauka)"
-        color = "#10b981"
-        action_note = f"RSI level {rsi} par Oversold support ke paas hai. Yahan se tezi aane ka high probability setup hai."
-        target = round(live_price + (live_price * 0.025), 2)
-        stoploss = round(live_price - (live_price * 0.012), 2)
-    else:
-        verdict = "WAIT / HOLD (Breakout Ka Intezar Karein)"
-        color = "#f59e0b"
-        action_note = f"RSI level {rsi} consolidation zone me hai. Safe traders confirmation trigger hone tak intezar karein."
-        target = round(live_price + (live_price * 0.015), 2)
-        stoploss = round(live_price - (live_price * 0.010), 2)
-
+    color = "#10b981" if rsi <= 38 else ("#ef4444" if rsi >= 65 else "#f59e0b")
+    verdict = "STRONG BUY" if rsi <= 38 else ("AVOID / SELL" if rsi >= 65 else "WAIT / HOLD")
     html = f"""
-    <div style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:10px;margin-bottom:10px;'>
-      <div>
-        <span style='color:#94a3b8;font-size:12px;'>Scanned Asset</span><br>
-        <span style='color:#38bdf8;font-size:20px;font-weight:800;'>{sym}</span>
-      </div>
-      <div>
-        <span style='color:{color};font-size:14px;font-weight:800;border:1px solid {color}55;background:{color}15;padding:6px 12px;border-radius:6px;'>
-          🎯 {verdict}
-        </span>
-      </div>
-    </div>
-
-    <div class='step-box'>
-      <b>⚡ Current RSI Momentum:</b> {rsi} / 100<br>
-      <b>🎯 AI Target (Lakshya):</b> ₹{target:,.2f} (+{round(abs((target-live_price)/live_price)*100, 2)}%)<br>
-      <b>🛑 Stop-Loss:</b> ₹{stoploss:,.2f} (-{round(abs((stoploss-live_price)/live_price)*100, 2)}%)
-    </div>
-
     <div class='step-box' style='border-left-color:{color};'>
-      <b>💡 AI Strategy (Hindi):</b><br>
-      {action_note}
+      <b>Asset:</b> {sym} | <b>Signal:</b> <span style='color:{color};font-weight:800;'>{verdict}</span><br>
+      <b>RSI:</b> {rsi} / 100 | <b>LTP:</b> ₹{live_price:,.2f}
     </div>
     """
     return jsonify({"html": html, "price": live_price, "rsi": rsi})
@@ -854,32 +1169,20 @@ def get_wallet_orders():
     c = conn.cursor(cursor_factory=RealDictCursor)
     c.execute("SELECT balance FROM user_wallets WHERE username = %s", (u,))
     row = c.fetchone()
-    if not row:
-        c.execute("INSERT INTO user_wallets (username, balance) VALUES (%s, %s)", (u, 10000.0))
-        conn.commit()
-        bal = 10000.0
-    else:
-        bal = row["balance"]
-
+    bal = row["balance"] if row else 10000.0
     c.execute("SELECT * FROM live_orders WHERE username = %s ORDER BY id DESC LIMIT 10", (u,))
     orders = c.fetchall()
-    c.close()
-    conn.close()
-
-    for o in orders:
-        o["created_at"] = str(o["created_at"])
-
+    c.close(); conn.close()
+    for o in orders: o["created_at"] = str(o["created_at"])
     return jsonify({"balance": bal, "orders": orders})
 
 @app.route("/api/execute-trade", methods=["POST"])
 def execute_trade():
     u = session.get("username", "admin")
     d = request.get_json(silent=True) or {}
-    sym = d.get("symbol", "NSE:RELIANCE")
-    action = d.get("action", "BUY")
-    qty = int(d.get("qty", 1))
-    price = float(d.get("price", 1000.0))
-    total_cost = round(qty * price, 2)
+    sym, action = d.get("symbol", "NSE:RELIANCE"), d.get("action", "BUY")
+    qty, price = int(d.get("qty", 1)), float(d.get("price", 1000.0))
+    cost = round(qty * price, 2)
 
     conn = get_db()
     c = conn.cursor(cursor_factory=RealDictCursor)
@@ -888,243 +1191,111 @@ def execute_trade():
     bal = row["balance"] if row else 10000.0
 
     if action == "BUY":
-        if bal < total_cost:
+        if bal < cost:
             c.close(); conn.close()
-            return jsonify({"status": "FAILED", "reason": f"Insufficient Balance! Chahiye: ₹{total_cost}, Uplabdh: ₹{bal:.2f}"})
-        new_bal = bal - total_cost
+            return jsonify({"status": "FAILED", "reason": "Insufficient Balance!"})
+        new_bal = bal - cost
     else:
-        new_bal = bal + total_cost
+        new_bal = bal + cost
 
-    c.execute("UPDATE user_wallets SET balance = %s, updated_at = CURRENT_TIMESTAMP WHERE username = %s", (new_bal, u))
+    c.execute("UPDATE user_wallets SET balance = %s WHERE username = %s", (new_bal, u))
     c.execute("INSERT INTO live_orders (username, symbol, action, qty, price, status) VALUES (%s, %s, %s, %s, %s, %s)",
               (u, sym, action, qty, price, "EXECUTED"))
     conn.commit()
-    c.close()
-    conn.close()
-
-    return jsonify({
-        "status": "SUCCESS",
-        "message": f"{action} Safal! {qty} shares {sym} @ ₹{price:.2f}. Naya Balance: ₹{new_bal:,.2f}"
-    })
+    c.close(); conn.close()
+    return jsonify({"status": "SUCCESS", "message": f"{action} Safal! {qty} {sym} @ ₹{price:.2f}"})
 
 @app.route("/api/deposit-funds", methods=["POST"])
 def deposit_funds():
     u = session.get("username", "admin")
     d = request.get_json(silent=True) or {}
-    amt = float(d.get("amount", 0))
-    utr = d.get("utr", "").strip()
-
-    if amt <= 0 or len(utr) < 6:
-        return jsonify({"status": "FAILED", "reason": "Galat amount ya UTR number!"})
-
+    amt, utr = float(d.get("amount", 0)), d.get("utr", "").strip()
+    if amt <= 0 or len(utr) < 6: return jsonify({"status": "FAILED", "reason": "Invalid details!"})
     conn = get_db()
     c = conn.cursor(cursor_factory=RealDictCursor)
     c.execute("SELECT balance FROM user_wallets WHERE username = %s", (u,))
     row = c.fetchone()
-    cur_bal = row["balance"] if row else 0.0
-    new_bal = cur_bal + amt
-
-    c.execute("UPDATE user_wallets SET balance = %s, updated_at = CURRENT_TIMESTAMP WHERE username = %s", (new_bal, u))
+    new_bal = (row["balance"] if row else 0.0) + amt
+    c.execute("UPDATE user_wallets SET balance = %s WHERE username = %s", (new_bal, u))
     conn.commit()
-    c.close()
-    conn.close()
-
+    c.close(); conn.close()
     return jsonify({"status": "SUCCESS", "new_balance": new_bal})
 
 # ==========================================
-# 6. REAL LIVE GOOGLE NEWS ENGINE
+# 9. REAL LIVE GOOGLE NEWS ENGINE
 # ==========================================
 @app.route("/news")
 def news():
     content = """
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
-        <div>
-          <h2>🔴 24x7 Real-Time Live News Feed</h2>
-          <p style="color:#94a3b8;font-size:13px;">Khabar par click karke puri report padhein.</p>
-        </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+        <h2>🔴 24x7 Real-Time Live News Feed</h2>
         <div style="display:flex;gap:6px;">
-          <button id="l_hi" class="btn" style="background:#ef4444;padding:6px 12px;font-size:12px;" onclick="switchLang('hi')">🇮🇳 हिंदी</button>
-          <button id="l_en" class="btn" style="background:rgba(255,255,255,0.08);color:#94a3b8;padding:6px 12px;font-size:12px;" onclick="switchLang('en')">🌐 English</button>
+          <button class="btn" style="background:#ef4444;padding:6px 10px;font-size:12px;" onclick="loadLiveNews('hi')">हिंदी</button>
+          <button class="btn" style="background:#334155;padding:6px 10px;font-size:12px;" onclick="loadLiveNews('en')">English</button>
         </div>
       </div>
-
-      <div style="display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;">
-        <button id="tb_biz" class="btn" style="flex:1;background:#38bdf8;color:#030712;font-size:12px;padding:8px 6px;min-width:110px;" onclick="fetchLiveCat('business')">💼 Market & Business</button>
-        <button id="tb_world" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 6px;min-width:110px;" onclick="fetchLiveCat('world')">🌍 Global Geopolitics</button>
-        <button id="tb_pol" class="btn" style="flex:1;background:rgba(255,255,255,0.08);color:#94a3b8;font-size:12px;padding:8px 6px;min-width:110px;" onclick="fetchLiveCat('nation')">🏛️ National Policies</button>
-      </div>
-
-      <div id="live_feed_box">
-        <div style="text-align:center;padding:30px;color:#38bdf8;">
-          <i class="fa-solid fa-spinner fa-spin"></i> Live news fetch ho rahi hai...
-        </div>
-      </div>
-
-      <div id="news_modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:999;backdrop-filter:blur(5px);justify-content:center;align-items:center;padding:16px;">
-        <div style="background:#111827;border:1px solid #38bdf8;border-radius:14px;max-width:620px;width:100%;max-height:85vh;overflow-y:auto;padding:22px;position:relative;">
-          <button onclick="closeNewsModal()" style="position:absolute;top:16px;right:16px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:30px;height:30px;font-weight:700;cursor:pointer;">✕</button>
-          <span id="md_source" style="background:#0284c7;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;display:inline-block;margin-bottom:8px;">Live Source</span>
-          <div id="md_pub" style="font-size:11px;color:#64748b;margin-bottom:10px;"></div>
-          <h2 id="md_title" style="color:#f8fafc;font-size:18px;line-height:1.4;margin-bottom:12px;"></h2>
-          <p id="md_desc" style="color:#cbd5e1;font-size:13px;line-height:1.7;margin-bottom:16px;"></p>
-          <a id="md_link" href="#" target="_blank" class="btn btn-green" style="text-decoration:none;display:block;text-align:center;">
-            🌐 Asli Source Par Puri Report Padhein →
-          </a>
-        </div>
-      </div>
+      <div id="live_feed_box"><div style="text-align:center;padding:20px;color:#38bdf8;">Fetching Live News...</div></div>
     </div>
-
     <script>
-    let activeLang = 'hi';
-    let activeCat = 'business';
-    let currentLoadedArticles = [];
-
-    async function loadLiveNews() {
+    async function loadLiveNews(lang='hi') {
       const box = document.getElementById('live_feed_box');
-      box.innerHTML = '<div style="text-align:center;padding:30px;color:#38bdf8;"><i class="fa-solid fa-spinner fa-spin"></i> Live news fetch ho rahi hai...</div>';
+      box.innerHTML = '<div style="text-align:center;padding:20px;color:#38bdf8;">Fetching Live News...</div>';
       try {
-        const res = await fetch(`/api/live-news-feed?cat=${activeCat}&lang=${activeLang}`);
+        const res = await fetch(`/api/live-news-feed?lang=${lang}`);
         const data = await res.json();
-        currentLoadedArticles = data.articles || [];
-        if(currentLoadedArticles.length === 0) {
-          box.innerHTML = '<div style="color:#ef4444;padding:20px;text-align:center;">News fetch nahi ho saki. Please refresh.</div>';
-          return;
-        }
-        box.innerHTML = currentLoadedArticles.map((art, idx) => `
-          <div class="news-item" onclick="showNewsDetail(${idx})" style="cursor:pointer;border-left:4px solid #38bdf8;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-              <span style="background:rgba(56,189,248,0.15);color:#38bdf8;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:700;">${art.source}</span>
-              <span style="font-size:11px;color:#64748b;">⏱️ ${art.published}</span>
-            </div>
-            <h3 style="font-size:15px;color:#f8fafc;margin-bottom:6px;line-height:1.4;">${art.title}</h3>
-            <p style="font-size:13px;color:#94a3b8;line-height:1.6;">${art.description}</p>
-            <div style="font-size:12px;color:#34d399;font-weight:700;margin-top:6px;">Puri khabar aur report padhein →</div>
+        box.innerHTML = (data.articles || []).map(art => `
+          <div class="news-item">
+            <span style="font-size:11px;color:#38bdf8;font-weight:700;">${art.source}</span>
+            <h4 style="margin:4px 0;"><a href="${art.link}" target="_blank" style="color:#f8fafc;text-decoration:none;">${art.title}</a></h4>
+            <span style="font-size:11px;color:#64748b;">${art.published}</span>
           </div>
         `).join('');
-      } catch(e) {
-        box.innerHTML = '<div style="color:#ef4444;padding:20px;text-align:center;">Connection timeout.</div>';
-      }
+      } catch(e) { box.innerHTML = '<div style="color:#ef4444;text-align:center;">Feed error.</div>'; }
     }
-
-    function showNewsDetail(idx) {
-      const art = currentLoadedArticles[idx];
-      if(!art) return;
-      document.getElementById('md_source').innerText = art.source;
-      document.getElementById('md_pub').innerText = 'Published: ' + art.published;
-      document.getElementById('md_title').innerText = art.title;
-      document.getElementById('md_desc').innerText = art.description;
-      document.getElementById('md_link').href = art.link;
-      document.getElementById('news_modal').style.display = 'flex';
-    }
-
-    function closeNewsModal() { document.getElementById('news_modal').style.display = 'none'; }
-    window.onclick = function(e) { if(e.target === document.getElementById('news_modal')) closeNewsModal(); };
-
-    function switchLang(l) {
-      activeLang = l;
-      document.getElementById('l_hi').style.background = l==='hi' ? '#ef4444' : 'rgba(255,255,255,0.08)';
-      document.getElementById('l_hi').style.color = l==='hi' ? '#fff' : '#94a3b8';
-      document.getElementById('l_en').style.background = l==='en' ? '#ef4444' : 'rgba(255,255,255,0.08)';
-      document.getElementById('l_en').style.color = l==='en' ? '#fff' : '#94a3b8';
-      loadLiveNews();
-    }
-
-    function fetchLiveCat(cat) {
-      activeCat = cat;
-      ['tb_biz', 'tb_world', 'tb_pol'].forEach(id => {
-        document.getElementById(id).style.background = 'rgba(255,255,255,0.08)';
-        document.getElementById(id).style.color = '#94a3b8';
-      });
-      document.getElementById(cat==='business'?'tb_biz':(cat==='world'?'tb_world':'tb_pol')).style.background = '#38bdf8';
-      document.getElementById(cat==='business'?'tb_biz':(cat==='world'?'tb_world':'tb_pol')).style.color = '#030712';
-      loadLiveNews();
-    }
-
     window.onload = function() { loadLiveNews(); };
     </script>
     """
-    return render_template_string(T_HEAD + content + T_FOOT)
+        return render_template_string(T_HEAD + content + T_FOOT)
 
 @app.route("/api/live-news-feed")
 def live_news_feed_api():
-    cat = request.args.get("cat", "business")
     lang = request.args.get("lang", "hi")
-    feed_urls = {
-        "hi": {
-            "business": "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=hi&gl=IN&ceid=IN:hi",
-            "world": "https://news.google.com/rss/headlines/section/topic/WORLD?hl=hi&gl=IN&ceid=IN:hi",
-            "nation": "https://news.google.com/rss/headlines/section/topic/NATION?hl=hi&gl=IN&ceid=IN:hi"
-        },
-        "en": {
-            "business": "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en-IN&gl=IN&ceid=IN:en",
-            "world": "https://news.google.com/rss/headlines/section/topic/WORLD?hl=en-IN&gl=IN&ceid=IN:en",
-            "nation": "https://news.google.com/rss/headlines/section/topic/NATION?hl=en-IN&gl=IN&ceid=IN:en"
-        }
-    }
-    url = feed_urls.get(lang, {}).get(cat, feed_urls["hi"]["business"])
+    url = "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=hi&gl=IN&ceid=IN:hi" if lang == "hi" else "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en-IN&gl=IN&ceid=IN:en"
     articles = []
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-        with urllib.request.urlopen(req, timeout=6) as response:
-            xml_data = response.read()
-        root = ET.fromstring(xml_data)
-        for item in root.findall('.//item')[:12]:
-            raw_title = item.find('title').text if item.find('title') is not None else "No Title"
-            link = item.find('link').text if item.find('link') is not None else "#"
-            pub = item.find('pubDate').text if item.find('pubDate') is not None else "Just Now"
-            parts = raw_title.rsplit(' - ', 1)
-            title = parts[0]
-            source = parts[1] if len(parts) > 1 else "Google News"
-            pub_short = pub.replace("+0000", "").replace("GMT", "").strip()
-            articles.append({
-                "title": title, "source": source, "link": link, "published": pub_short,
-                "description": f"{title}. Is vishay par poori report padhne ke liye neeche button dabayein."
-            })
-    except Exception as e:
-        print("RSS Error:", e)
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            root = ET.fromstring(resp.read())
+            for item in root.findall('.//item')[:10]:
+                title = item.find('title').text or "News"
+                link = item.find('link').text or "#"
+                pub = item.find('pubDate').text or ""
+                articles.append({"title": title.rsplit(' - ', 1)[0], "source": title.rsplit(' - ', 1)[-1], "link": link, "published": pub})
+    except Exception as e: print("RSS Error:", e)
     return jsonify({"articles": articles})
 
 # ==========================================
-# 7. MATH MASTER (VOICE SOLVER)
+# 10. MATH MASTER & SMART TOOLS
 # ==========================================
 @app.route("/math-master")
 def math_master():
     content = """
     <div class="card" style="max-width:700px;margin:0 auto;">
       <h2>🧮 DEX AIR Math Master (Voice & Solver)</h2>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px 0;">
-        <label style="font-size:13px;color:#38bdf8;font-weight:700;">सवाल लिखें या माइक से बोलें:</label>
-        <button id="mb" class="mic-btn" type="button" onclick="recVoice()"><i class="fa-solid fa-microphone"></i> <span id="mt">बोलकर लिखें</span></button>
-      </div>
-      <textarea id="mq" rows="3" placeholder="जैसे: एक व्यक्ति 10km की रफ़्तार से 58km कितने देर में पहुँचेगा?"></textarea>
-      <button class="btn btn-purple" onclick="runMath()"><i class="fa-solid fa-calculator"></i> स्टेप-बाय-स्टेप हिंदी में हल निकालें</button>
-      <div id="m_out" class="out">यहाँ आपका विस्तृत हल और उत्तर दिखेगा...</div>
+      <textarea id="mq" rows="3" placeholder="जैसे: 10km की रफ़्तार से 58km कितने देर में पहुँचेंगे?"></textarea>
+      <button class="btn btn-purple" onclick="runMath()">हल निकालें</button>
+      <div id="m_out" class="out">यहाँ आपका विस्तृत हल दिखेगा...</div>
     </div>
     <script>
-    function recVoice(){
-      var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if(!SR){ alert("Browser voice support nahi karta. Chrome use karein."); return; }
-      var r = new SR();
-      r.lang = 'hi-IN';
-      document.getElementById('mt').innerText = "सुन रहा हूँ...";
-      r.onresult = function(e){
-        document.getElementById('mq').value = e.results[0][0].transcript;
-        document.getElementById('mt').innerText = "बोलकर लिखें";
-      };
-      r.onerror = function(){ document.getElementById('mt').innerText = "बोलकर लिखें"; };
-      r.start();
-    }
     async function runMath(){
       var q = document.getElementById('mq').value.trim();
-      var out = document.getElementById('m_out');
-      if(!q){ alert("सवाल लिखें या बोलें!"); return; }
-      out.innerText = "हल तैयार किया जा रहा है...";
+      if(!q) return alert("सवाल लिखें!");
       try{
         var res = await fetch('/math-calc', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})});
         var d = await res.json();
-        out.innerHTML = d.explanation;
-      }catch(e){ out.innerText = "Calculation error."; }
+        document.getElementById('m_out').innerHTML = d.explanation;
+      }catch(e){ document.getElementById('m_out').innerText="Error."; }
     }
     </script>
     """
@@ -1135,55 +1306,28 @@ def math_calc():
     d = request.get_json(silent=True) or {}
     q = d.get("question", "").lower()
     nums = [float(x) for x in re.findall(r"[-+]?\d*\.\d+|\d+", q)]
-    if ("km" in q or "doori" in q or "दूरी" in q or "raftar" in q or "speed" in q or "चाल" in q or "samay" in q or "समय" in q) and len(nums) >= 2:
-        speed = nums[0] if nums[0] <= nums[1] else nums[1]
-        dist = nums[1] if nums[0] <= nums[1] else nums[0]
+    if len(nums) >= 2:
+        speed, dist = min(nums[0], nums[1]), max(nums[0], nums[1])
         th = dist / speed
-        h = int(th)
-        m = int(round((th - h) * 60))
-        exp = f"""
-        <div style='color:#38bdf8;font-size:16px;font-weight:700;'>📖 चाल, समय और दूरी का रियल हिंदी हल:</div>
-        <div class='step-box'><b>Step 1:</b> चाल = <b>{speed} km/h</b>, दूरी = <b>{dist} km</b></div>
-        <div class='step-box'><b>Step 2:</b> समय = दूरी ÷ चाल = {dist} ÷ {speed} = <b>{round(th, 2)} घंटे</b></div>
-        <div class='step-box' style='border-left-color:#34d399;'>🎯 <b>अंतिम उत्तर:</b> पहुँचने में <b>{h} घंटे {m} मिनट</b> लगेंगे ({round(th, 2)} घंटे)।</div>
-        """
+        exp = f"<div class='step-box'><b>दूरी:</b> {dist} km | <b>चाल:</b> {speed} km/h<br><b>समय:</b> {round(th, 2)} घंटे ({int(th)} घंटे {int(round((th-int(th))*60))} मिनट)</div>"
         return jsonify({"explanation": exp})
-    return jsonify({"explanation": f"<div class='step-box'><b>सवाल:</b> {d.get('question')}<br>कृपया संख्या और यूनिट्स (जैसे 10 km/h और 58 km) साफ़ लिखें।</div>"})
+    return jsonify({"explanation": "<div class='step-box'>कृपया साफ़ संख्याएँ दर्ज करें।</div>"})
 
-# ==========================================
-# 8. 5 SMART TOOLS & ₹99 SUBSCRIPTION
-# ==========================================
 @app.route("/smart-tools")
 def smart_tools():
     content = """
     <div class="card" style="max-width:720px;margin:0 auto;">
-      <h2>🧰 Daily Life Smart Tools</h2>
-      <div style="display:flex;gap:6px;margin:14px 0;flex-wrap:wrap;">
+      <h2>🧰 Daily Smart Tools</h2>
+      <div style="display:flex;gap:6px;margin:14px 0;">
         <button class="btn btn-green" style="flex:1;" onclick="calcG()">🧾 GST (18%)</button>
-        <button class="btn btn-green" style="flex:1;" onclick="calcE()">🏦 Loan EMI</button>
-        <button class="btn btn-green" style="flex:1;" onclick="calcF()">⛽ Fuel Trip</button>
+        <button class="btn btn-green" style="flex:1;" onclick="calcE()">🏦 EMI</button>
       </div>
-      <label>Amount / Principal / Distance (₹ / KM)</label>
       <input type="number" id="in_p" value="50000">
-      <div id="st_out" class="out">गणना देखने के लिए ऊपर बटन पर क्लिक करें...</div>
+      <div id="st_out" class="out">गणना देखने के लिए ऊपर क्लिक करें...</div>
     </div>
     <script>
-    function calcG(){
-      var v = Number(document.getElementById('in_p').value);
-      var g = v * 0.18;
-      document.getElementById('st_out').innerHTML = "Base: ₹" + v + "<br>GST (18%): ₹" + g.toFixed(2) + "<br><b>Total: ₹" + (v+g).toFixed(2) + "</b>";
-    }
-    function calcE(){
-      var p = Number(document.getElementById('in_p').value);
-      var r = (10.5/12)/100, n = 36;
-      var emi = (p * r * Math.pow(1+r,n))/(Math.pow(1+r,n)-1);
-      document.getElementById('st_out').innerHTML = "Loan: ₹" + p + " (10.5% for 3 yrs)<br><b>Monthly EMI: ₹" + Math.round(emi) + " / माह</b>";
-    }
-    function calcF(){
-      var dist = Number(document.getElementById('in_p').value);
-      var cost = (dist / 15) * 96;
-      document.getElementById('st_out').innerHTML = "Distance: " + dist + " KM (15 km/l @ ₹96)<br><b>Fuel Cost: ₹" + Math.round(cost) + "</b>";
-    }
+    function calcG(){ var v = Number(document.getElementById('in_p').value); document.getElementById('st_out').innerHTML = "Base: ₹"+v+" | <b>Total (18% GST): ₹"+(v*1.18).toFixed(2)+"</b>"; }
+    function calcE(){ var p = Number(document.getElementById('in_p').value), r = (10.5/12)/100, n = 36; var emi = (p*r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1); document.getElementById('st_out').innerHTML = "<b>Monthly EMI: ₹"+Math.round(emi)+" / माह</b>"; }
     </script>
     """
     return render_template_string(T_HEAD + content + T_FOOT)
@@ -1193,50 +1337,13 @@ def subscription():
     content = """
     <div class="card" style="max-width:650px;margin:0 auto;text-align:center;">
       <h2>💳 DEX AIR Pro Subscription (₹99)</h2>
-      <p style="color:#94a3b8;font-size:13px;margin:8px 0 14px 0;">PhonePe / UPI से ₹99 भेजें और तुरंत Pro Key पाएँ।</p>
-      <div style="background:#fff;padding:12px;border-radius:12px;display:inline-block;margin:10px 0;">
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=upi://pay?pa=8791223831@ibl%26pn=DEX%20AIR%26am=99%26cu=INR" style="width:200px;height:200px;display:block;">
-      </div>
-      <div>Official UPI ID: <code style="color:#38bdf8;font-weight:700;">8791223831@ibl</code></div>
-      <div style="text-align:left;margin-top:18px;">
-        <label>आपका नाम</label><input type="text" id="pu" placeholder="e.g. Ramesh Kumar">
-        <label>UPI UTR / Reference Number (12 Digits)</label><input type="text" id="putr" placeholder="12 digit UTR number">
-        <button class="btn btn-green" onclick="subPay()">Verify & Get Pro Key</button>
-      </div>
-      <div id="sub_out" class="out" style="display:none;"></div>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=8791223831@ibl%26pn=DEX%20AIR%26am=99%26cu=INR" style="margin:14px auto;display:block;">
+      <div>Official UPI: <code style="color:#38bdf8;">8791223831@ibl</code></div>
     </div>
-    <script>
-    async function subPay(){
-      var u = document.getElementById('pu').value.trim();
-      var ut = document.getElementById('putr').value.trim();
-      var out = document.getElementById('sub_out');
-      if(!u || !ut){ alert("नाम और 12-अंकों का UTR नंबर भरें!"); return; }
-      out.style.display = 'block';
-      out.innerText = "PostgreSQL से Pro Key रजिस्टर हो रही है...";
-      try{
-        var res = await fetch('/checkout', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:u,utr:ut,tier:'pro'})});
-        var d = await res.json();
-        out.innerHTML = "🎉 <b>Payment Request Received!</b><br>Key: <span style='color:#38bdf8;font-size:16px;'>" + d.issued_key + "</span><br>Tier: " + d.tier;
-      }catch(e){ out.innerText = "Error registering key."; }
-    }
-    </script>
     """
     return render_template_string(T_HEAD + content + T_FOOT)
 
-@app.route("/checkout", methods=["POST"])
-def checkout():
-    d = request.get_json(silent=True) or {}
-    uid, tier, k = d.get("user_id", "Client"), d.get("tier", "pro"), f"dex_{uuid.uuid4().hex[:24]}"
-    try:
-        conn = get_db()
-        c = conn.cursor()
-        c.execute("INSERT INTO api_vault (api_key, user_id, tier) VALUES (%s, %s, %s)", (k, uid, tier))
-        conn.commit()
-        c.close(); conn.close()
-        return jsonify({"status": "ISSUED", "issued_key": k, "user": uid, "tier": tier})
-    except Exception as e:
-        return jsonify({"status": "FAILED", "reason": str(e)}), 500
-
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
-    
+
+            
